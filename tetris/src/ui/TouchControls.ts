@@ -1,40 +1,34 @@
 import Phaser from 'phaser';
-import { FONT_FAMILY } from '../constants/GameConstants';
+import { FONT_FAMILY, CANVAS_WIDTH, TOUCH_ZONE_Y, CANVAS_HEIGHT } from '../constants/GameConstants';
 
 type ActionCallback = () => void;
 
-const REPEAT_DELAY    = 150; // 长按触发 DAS 前的等待时间（ms）
-const REPEAT_INTERVAL = 50;  // ARR 触发间隔（ms）
+const REPEAT_DELAY    = 150;
+const REPEAT_INTERVAL = 50;
+
+// ── 按钮区布局（3列 × 2行，位于游戏区正下方）────────────────────────────────────
+//
+//  行1: [ ← 左移 ] [ ↓ 软落 ] [ → 右移 ]
+//  行2: [ ↺ 逆转 ] [ ⬇ 落地 ] [ ↻ 顺转 ]
+//
+const COL_W  = Math.floor(CANVAS_WIDTH / 3);   // 160
+const BTN_H  = 66;
+const ROW_GAP = 6;
+const ROW1_Y = TOUCH_ZONE_Y + 4;
+const ROW2_Y = ROW1_Y + BTN_H + ROW_GAP;
 
 interface ButtonConfig {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  col: number;          // 0 / 1 / 2
+  row: number;          // 0 / 1
   label: string;
   sublabel: string;
   bgColor: number;
-  alpha: number;
   repeatable: boolean;
   callback: ActionCallback;
 }
 
-// 布局常量（左右等宽，贴两侧边缘，间距 10px）
-const BTN_W   = 72;
-const LEFT_X  = 0;
-const RIGHT_X = 480 - BTN_W;   // = 408
-const BTN_H   = 62;
-const BTN_GAP = 10;
-const BTN_Y   = [
-  640 - BTN_H * 3 - BTN_GAP * 2 - 8,                  // = 426
-  640 - BTN_H * 3 - BTN_GAP * 2 - 8 + BTN_H + BTN_GAP, // = 498
-  640 - BTN_H * 3 - BTN_GAP * 2 - 8 + (BTN_H + BTN_GAP) * 2, // = 570
-];
-
 export class TouchControls {
   private container: Phaser.GameObjects.Container;
-
-  // 长按计时器：存 { delay剩余, interval计时, callback }
   private repeatTimers: Map<
     Phaser.GameObjects.Container,
     { delay: number; interval: number; callback: ActionCallback }
@@ -53,45 +47,29 @@ export class TouchControls {
   ) {
     this.container = scene.add.container(0, 0);
 
+    // 按钮区背景
+    const zoneBg = scene.add.rectangle(
+      CANVAS_WIDTH / 2, TOUCH_ZONE_Y + (CANVAS_HEIGHT - TOUCH_ZONE_Y) / 2,
+      CANVAS_WIDTH, CANVAS_HEIGHT - TOUCH_ZONE_Y,
+      0x080810, 1
+    );
+    // 分隔线
+    const divider = scene.add.rectangle(
+      CANVAS_WIDTH / 2, TOUCH_ZONE_Y,
+      CANVAS_WIDTH, 2,
+      0x334466, 0.8
+    );
+    this.container.add([zoneBg, divider]);
+
     const configs: ButtonConfig[] = [
-      // ── 左侧（从上到下）：软下落 / 逆时针旋转 / 向左移动 ─────────────────────
-      {
-        x: LEFT_X,  y: BTN_Y[0], width: BTN_W, height: BTN_H,
-        label: '↓', sublabel: '软落',
-        bgColor: 0x223355, alpha: 0.80, repeatable: true,
-        callback: callbacks.onSoftDrop,
-      },
-      {
-        x: LEFT_X,  y: BTN_Y[1], width: BTN_W, height: BTN_H,
-        label: '↺', sublabel: '逆转',
-        bgColor: 0x334422, alpha: 0.80, repeatable: false,
-        callback: callbacks.onRotateCCW,
-      },
-      {
-        x: LEFT_X,  y: BTN_Y[2], width: BTN_W, height: BTN_H,
-        label: '←', sublabel: '左移',
-        bgColor: 0x223355, alpha: 0.80, repeatable: true,
-        callback: callbacks.onMoveLeft,
-      },
-      // ── 右侧（从上到下）：瞬间落地 / 顺时针旋转 / 向右移动 ───────────────────
-      {
-        x: RIGHT_X, y: BTN_Y[0], width: BTN_W, height: BTN_H,
-        label: '⬇', sublabel: '落地',
-        bgColor: 0x442222, alpha: 0.80, repeatable: false,
-        callback: callbacks.onHardDrop,
-      },
-      {
-        x: RIGHT_X, y: BTN_Y[1], width: BTN_W, height: BTN_H,
-        label: '↻', sublabel: '顺转',
-        bgColor: 0x334422, alpha: 0.80, repeatable: false,
-        callback: callbacks.onRotateCW,
-      },
-      {
-        x: RIGHT_X, y: BTN_Y[2], width: BTN_W, height: BTN_H,
-        label: '→', sublabel: '右移',
-        bgColor: 0x223355, alpha: 0.80, repeatable: true,
-        callback: callbacks.onMoveRight,
-      },
+      // 行1
+      { col: 0, row: 0, label: '←', sublabel: '左移', bgColor: 0x1a2a44, repeatable: true,  callback: callbacks.onMoveLeft  },
+      { col: 1, row: 0, label: '↓', sublabel: '软落', bgColor: 0x1a2a44, repeatable: true,  callback: callbacks.onSoftDrop  },
+      { col: 2, row: 0, label: '→', sublabel: '右移', bgColor: 0x1a2a44, repeatable: true,  callback: callbacks.onMoveRight },
+      // 行2
+      { col: 0, row: 1, label: '↺', sublabel: '逆转', bgColor: 0x1e2e14, repeatable: false, callback: callbacks.onRotateCCW },
+      { col: 1, row: 1, label: '⬇', sublabel: '落地', bgColor: 0x3a1010, repeatable: false, callback: callbacks.onHardDrop  },
+      { col: 2, row: 1, label: '↻', sublabel: '顺转', bgColor: 0x1e2e14, repeatable: false, callback: callbacks.onRotateCW  },
     ];
 
     for (const cfg of configs) {
@@ -105,55 +83,55 @@ export class TouchControls {
   }
 
   private createButton(scene: Phaser.Scene, cfg: ButtonConfig): void {
-    const btn = scene.add.container(cfg.x, cfg.y);
+    const x = cfg.col * COL_W;
+    const y = cfg.row === 0 ? ROW1_Y : ROW2_Y;
+
+    const btn = scene.add.container(x, y);
 
     const bg = scene.add.rectangle(
-      cfg.width / 2, cfg.height / 2,
-      cfg.width, cfg.height,
-      cfg.bgColor, cfg.alpha
-    ).setStrokeStyle(1, 0x6688aa, 0.6);
+      COL_W / 2, BTN_H / 2,
+      COL_W - 2, BTN_H - 2,
+      cfg.bgColor, 0.92
+    ).setStrokeStyle(1, 0x4466aa, 0.5);
 
-    const labelText = scene.add.text(cfg.width / 2, cfg.height / 2 - 9, cfg.label, {
-      fontSize: '22px', color: '#ffffff', fontFamily: FONT_FAMILY,
+    const labelText = scene.add.text(COL_W / 2, BTN_H / 2 - 10, cfg.label, {
+      fontSize: '26px', color: '#ffffff', fontFamily: FONT_FAMILY,
     }).setOrigin(0.5);
 
-    const subText = scene.add.text(cfg.width / 2, cfg.height / 2 + 15, cfg.sublabel, {
-      fontSize: '11px', color: '#aabbcc', fontFamily: FONT_FAMILY,
+    const subText = scene.add.text(COL_W / 2, BTN_H / 2 + 16, cfg.sublabel, {
+      fontSize: '13px', color: '#99bbcc', fontFamily: FONT_FAMILY,
     }).setOrigin(0.5);
 
     btn.add([bg, labelText, subText]);
-    btn.setSize(cfg.width, cfg.height);
+    btn.setSize(COL_W, BTN_H);
     btn.setInteractive();
 
     btn.on('pointerdown', () => {
-      bg.setFillStyle(cfg.bgColor, Math.min(cfg.alpha + 0.15, 1));
-      bg.setStrokeStyle(2, 0xaaccff, 1);
-      cfg.callback(); // 立即触发一次
-
+      bg.setFillStyle(cfg.bgColor, 1);
+      bg.setStrokeStyle(2, 0x88ccff, 1);
+      cfg.callback();
       if (cfg.repeatable) {
         this.repeatTimers.set(btn, { delay: REPEAT_DELAY, interval: 0, callback: cfg.callback });
       }
     });
 
     const onRelease = () => {
-      bg.setFillStyle(cfg.bgColor, cfg.alpha);
-      bg.setStrokeStyle(1, 0x6688aa, 0.6);
+      bg.setFillStyle(cfg.bgColor, 0.92);
+      bg.setStrokeStyle(1, 0x4466aa, 0.5);
       this.repeatTimers.delete(btn);
     };
-    btn.on('pointerup', onRelease);
+    btn.on('pointerup',  onRelease);
     btn.on('pointerout', onRelease);
 
     this.container.add(btn);
   }
 
-  /** 每帧由 GameScene.update() 调用 */
   update(delta: number): void {
     for (const timer of this.repeatTimers.values()) {
       if (timer.delay > 0) {
         timer.delay -= delta;
         continue;
       }
-      // DAS 已触发，进入 ARR
       timer.interval += delta;
       while (timer.interval >= REPEAT_INTERVAL) {
         timer.interval -= REPEAT_INTERVAL;

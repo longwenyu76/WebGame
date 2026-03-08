@@ -4,8 +4,9 @@ export const GRID_ROWS = 20;
 export const CELL_SIZE = 28; // 每格像素大小
 
 // 画布布局
-export const CANVAS_WIDTH = 480;
-export const CANVAS_HEIGHT = 640;
+export const CANVAS_WIDTH  = 480;
+export const CANVAS_HEIGHT = 780;   // 640 游戏区 + 140 触控按钮区
+export const TOUCH_ZONE_Y  = 632;   // 按钮区起始 Y（游戏网格底部 y=620 + 12px 间距）
 export const GRID_OFFSET_X = 16; // 网格左边距
 export const GRID_OFFSET_Y = 60; // 网格上边距
 export const INFO_PANEL_X = GRID_OFFSET_X + GRID_COLS * CELL_SIZE + 16; // 信息面板X起点
