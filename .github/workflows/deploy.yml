@@ -1,0 +1,47 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: tetris/package-lock.json
+
+      - name: Install dependencies
+        working-directory: tetris
+        run: npm ci
+
+      - name: Build tetris
+        working-directory: tetris
+        run: npm run build
+
+      # 组装部署目录结构：
+      #   deploy/index.html         → 平台首页
+      #   deploy/tetris/            → 俄罗斯方块游戏
+      - name: Assemble deploy directory
+        run: |
+          mkdir -p deploy/tetris
+          cp index.html deploy/index.html
+          cp -r tetris/dist/. deploy/tetris/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: deploy
+          commit_message: 'deploy: ${{ github.event.head_commit.message }}'
