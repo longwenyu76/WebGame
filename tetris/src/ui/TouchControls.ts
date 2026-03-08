@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { FONT_FAMILY } from '../constants/GameConstants';
 
 type ActionCallback = () => void;
 
@@ -18,13 +19,17 @@ interface ButtonConfig {
   callback: ActionCallback;
 }
 
-// 布局常量
-const LEFT_X  = 8;
-const LEFT_W  = 68;
-const RIGHT_X = 316;
-const RIGHT_W = 156;
-const BTN_Y   = [444, 502, 560];
-const BTN_H   = 54;
+// 布局常量（左右等宽，贴两侧边缘，间距 10px）
+const BTN_W   = 72;
+const LEFT_X  = 0;
+const RIGHT_X = 480 - BTN_W;   // = 408
+const BTN_H   = 62;
+const BTN_GAP = 10;
+const BTN_Y   = [
+  640 - BTN_H * 3 - BTN_GAP * 2 - 8,                  // = 426
+  640 - BTN_H * 3 - BTN_GAP * 2 - 8 + BTN_H + BTN_GAP, // = 498
+  640 - BTN_H * 3 - BTN_GAP * 2 - 8 + (BTN_H + BTN_GAP) * 2, // = 570
+];
 
 export class TouchControls {
   private container: Phaser.GameObjects.Container;
@@ -51,40 +56,40 @@ export class TouchControls {
     const configs: ButtonConfig[] = [
       // ── 左侧（从上到下）：软下落 / 逆时针旋转 / 向左移动 ─────────────────────
       {
-        x: LEFT_X,  y: BTN_Y[0], width: LEFT_W, height: BTN_H,
+        x: LEFT_X,  y: BTN_Y[0], width: BTN_W, height: BTN_H,
         label: '↓', sublabel: '软落',
-        bgColor: 0x223355, alpha: 0.82, repeatable: true,
+        bgColor: 0x223355, alpha: 0.80, repeatable: true,
         callback: callbacks.onSoftDrop,
       },
       {
-        x: LEFT_X,  y: BTN_Y[1], width: LEFT_W, height: BTN_H,
+        x: LEFT_X,  y: BTN_Y[1], width: BTN_W, height: BTN_H,
         label: '↺', sublabel: '逆转',
-        bgColor: 0x334422, alpha: 0.82, repeatable: false,
+        bgColor: 0x334422, alpha: 0.80, repeatable: false,
         callback: callbacks.onRotateCCW,
       },
       {
-        x: LEFT_X,  y: BTN_Y[2], width: LEFT_W, height: BTN_H,
+        x: LEFT_X,  y: BTN_Y[2], width: BTN_W, height: BTN_H,
         label: '←', sublabel: '左移',
-        bgColor: 0x223355, alpha: 0.82, repeatable: true,
+        bgColor: 0x223355, alpha: 0.80, repeatable: true,
         callback: callbacks.onMoveLeft,
       },
       // ── 右侧（从上到下）：瞬间落地 / 顺时针旋转 / 向右移动 ───────────────────
       {
-        x: RIGHT_X, y: BTN_Y[0], width: RIGHT_W, height: BTN_H,
+        x: RIGHT_X, y: BTN_Y[0], width: BTN_W, height: BTN_H,
         label: '⬇', sublabel: '落地',
-        bgColor: 0x442222, alpha: 0.92, repeatable: false,
+        bgColor: 0x442222, alpha: 0.80, repeatable: false,
         callback: callbacks.onHardDrop,
       },
       {
-        x: RIGHT_X, y: BTN_Y[1], width: RIGHT_W, height: BTN_H,
+        x: RIGHT_X, y: BTN_Y[1], width: BTN_W, height: BTN_H,
         label: '↻', sublabel: '顺转',
-        bgColor: 0x334422, alpha: 0.92, repeatable: false,
+        bgColor: 0x334422, alpha: 0.80, repeatable: false,
         callback: callbacks.onRotateCW,
       },
       {
-        x: RIGHT_X, y: BTN_Y[2], width: RIGHT_W, height: BTN_H,
+        x: RIGHT_X, y: BTN_Y[2], width: BTN_W, height: BTN_H,
         label: '→', sublabel: '右移',
-        bgColor: 0x223355, alpha: 0.92, repeatable: true,
+        bgColor: 0x223355, alpha: 0.80, repeatable: true,
         callback: callbacks.onMoveRight,
       },
     ];
@@ -108,12 +113,12 @@ export class TouchControls {
       cfg.bgColor, cfg.alpha
     ).setStrokeStyle(1, 0x6688aa, 0.6);
 
-    const labelText = scene.add.text(cfg.width / 2, cfg.height / 2 - 8, cfg.label, {
-      fontSize: '22px', color: '#ffffff',
+    const labelText = scene.add.text(cfg.width / 2, cfg.height / 2 - 9, cfg.label, {
+      fontSize: '22px', color: '#ffffff', fontFamily: FONT_FAMILY,
     }).setOrigin(0.5);
 
-    const subText = scene.add.text(cfg.width / 2, cfg.height / 2 + 14, cfg.sublabel, {
-      fontSize: '11px', color: '#aabbcc',
+    const subText = scene.add.text(cfg.width / 2, cfg.height / 2 + 15, cfg.sublabel, {
+      fontSize: '11px', color: '#aabbcc', fontFamily: FONT_FAMILY,
     }).setOrigin(0.5);
 
     btn.add([bg, labelText, subText]);
