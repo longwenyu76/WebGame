@@ -480,18 +480,18 @@ export class GameScene extends Phaser.Scene {
       ...textStyle,
     });
 
-    const pauseBtn = this.add.text(CANVAS_WIDTH - 12, 8, '[P] 暂停', {
+    const pauseBtn = this.add.text(CANVAS_WIDTH - 12, 28, '[P] 暂停', {
       fontSize: '16px', color: '#aaaaaa',
       ...textStyle,
-    }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+    }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
     pauseBtn.on('pointerover', () => pauseBtn.setColor('#ffffff'));
     pauseBtn.on('pointerout',  () => pauseBtn.setColor('#aaaaaa'));
     pauseBtn.on('pointerdown', () => this.togglePause());
 
-    const restartBtn = this.add.text(CANVAS_WIDTH - 12, 32, '[R] 重开', {
+    const restartBtn = this.add.text(CANVAS_WIDTH - 100, 28, '[R] 重开', {
       fontSize: '16px', color: '#aaaaaa',
       ...textStyle,
-    }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
+    }).setOrigin(1, 0.5).setInteractive({ useHandCursor: true });
     restartBtn.on('pointerover', () => restartBtn.setColor('#ffffff'));
     restartBtn.on('pointerout',  () => restartBtn.setColor('#aaaaaa'));
     restartBtn.on('pointerdown', () => this.requestRestart());

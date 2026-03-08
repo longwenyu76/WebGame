@@ -15,12 +15,11 @@ const ROW2_Y  = ROW1_Y + BTN_H + ROW_GAP;
 
 // 按钮定义
 const LAYOUT = [
-  { row: 0, col: 0, label: '←', sub: '左移', color: 0x1a2a44, rep: true,  key: 'onMoveLeft'  },
-  { row: 0, col: 1, label: '↓', sub: '软落', color: 0x1a2a44, rep: true,  key: 'onSoftDrop'  },
-  { row: 0, col: 2, label: '→', sub: '右移', color: 0x1a2a44, rep: true,  key: 'onMoveRight' },
-  { row: 1, col: 0, label: '↺', sub: '逆转', color: 0x1e2e14, rep: false, key: 'onRotateCCW' },
-  { row: 1, col: 1, label: '⬇', sub: '落地', color: 0x3a1010, rep: false, key: 'onHardDrop'  },
-  { row: 1, col: 2, label: '↻', sub: '顺转', color: 0x1e2e14, rep: false, key: 'onRotateCW'  },
+  { row: 0, col: 0, label: '↺', sub: '逆转', color: 0x1e2e14, rep: false, key: 'onRotateCCW' },
+  { row: 0, col: 1, label: '⬇', sub: '落地', color: 0x3a1010, rep: false, key: 'onHardDrop'  },
+  { row: 0, col: 2, label: '↻', sub: '顺转', color: 0x1e2e14, rep: false, key: 'onRotateCW'  },
+  { row: 1, col: 0, label: '←', sub: '左移', color: 0x1a2a44, rep: true,  key: 'onMoveLeft'  },
+  { row: 1, col: 2, label: '→', sub: '右移', color: 0x1a2a44, rep: true,  key: 'onMoveRight' },
 ] as const;
 
 type Callbacks = {
