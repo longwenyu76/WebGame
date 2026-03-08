@@ -20,9 +20,12 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: tetris/package-lock.json
+          cache-dependency-path: |
+            tetris/package-lock.json
+            snake/package-lock.json
 
-      - name: Install dependencies
+      # ── Tetris ──────────────────────────────────────────────────────────────
+      - name: Install tetris dependencies
         working-directory: tetris
         run: npm ci
 
@@ -30,14 +33,26 @@ jobs:
         working-directory: tetris
         run: npm run build
 
-      # 组装部署目录结构：
-      #   deploy/index.html         → 平台首页
-      #   deploy/tetris/            → 俄罗斯方块游戏
+      # ── Snake ───────────────────────────────────────────────────────────────
+      - name: Install snake dependencies
+        working-directory: snake
+        run: npm ci
+
+      - name: Build snake
+        working-directory: snake
+        run: npm run build
+
+      # ── Assemble deploy directory ────────────────────────────────────────────
+      # 目录结构：
+      #   deploy/index.html    → 平台首页
+      #   deploy/tetris/       → 俄罗斯方块
+      #   deploy/snake/        → 贪吃蛇
       - name: Assemble deploy directory
         run: |
-          mkdir -p deploy/tetris
+          mkdir -p deploy/tetris deploy/snake
           cp index.html deploy/index.html
           cp -r tetris/dist/. deploy/tetris/
+          cp -r snake/dist/.  deploy/snake/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
