@@ -21,38 +21,50 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: |
-            tetris/package-lock.json
-            snake/package-lock.json
+            block-puzzle/package-lock.json
+            hungry-loong/package-lock.json
+            brick-breaker/package-lock.json
 
-      # ── Tetris ──────────────────────────────────────────────────────────────
-      - name: Install tetris dependencies
-        working-directory: tetris
+      # ── Block Puzzle ─────────────────────────────────────────────────────────
+      - name: Install block-puzzle dependencies
+        working-directory: block-puzzle
         run: npm ci
 
-      - name: Build tetris
-        working-directory: tetris
+      - name: Build block-puzzle
+        working-directory: block-puzzle
         run: npm run build
 
-      # ── Snake ───────────────────────────────────────────────────────────────
-      - name: Install snake dependencies
-        working-directory: snake
+      # ── Hungry Loong ─────────────────────────────────────────────────────────
+      - name: Install hungry-loong dependencies
+        working-directory: hungry-loong
         run: npm ci
 
-      - name: Build snake
-        working-directory: snake
+      - name: Build hungry-loong
+        working-directory: hungry-loong
+        run: npm run build
+
+      # ── Brick Breaker ────────────────────────────────────────────────────────
+      - name: Install brick-breaker dependencies
+        working-directory: brick-breaker
+        run: npm ci
+
+      - name: Build brick-breaker
+        working-directory: brick-breaker
         run: npm run build
 
       # ── Assemble deploy directory ────────────────────────────────────────────
       # 目录结构：
-      #   deploy/index.html    → 平台首页
-      #   deploy/tetris/       → 俄罗斯方块
-      #   deploy/snake/        → 贪吃蛇
+      #   deploy/index.html         → 平台首页
+      #   deploy/block-puzzle/      → 方块消除
+      #   deploy/hungry-loong/      → 贪吃的小龙
+      #   deploy/brick-breaker/     → 敲砖英雄
       - name: Assemble deploy directory
         run: |
-          mkdir -p deploy/tetris deploy/snake
+          mkdir -p deploy/block-puzzle deploy/hungry-loong deploy/brick-breaker
           cp index.html deploy/index.html
-          cp -r tetris/dist/. deploy/tetris/
-          cp -r snake/dist/.  deploy/snake/
+          cp -r block-puzzle/dist/.  deploy/block-puzzle/
+          cp -r hungry-loong/dist/.  deploy/hungry-loong/
+          cp -r brick-breaker/dist/. deploy/brick-breaker/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

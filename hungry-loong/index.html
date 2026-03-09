@@ -6,8 +6,8 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>俄罗斯方块</title>
-    <!-- 马善政楷体（楷书风格，Google Fonts） -->
+    <title>贪吃的小龙 (Hungry Loong)</title>
+    <meta name="description" content="贪吃的小龙 (Hungry Loong) — 经典移动游戏" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet" />
@@ -17,7 +17,7 @@
       html, body {
         width: 100%;
         height: 100%;
-        background-color: #1a1a2e;
+        background-color: #0a1a0a;
         overflow: hidden;
         -webkit-user-select: none;
         user-select: none;
@@ -25,7 +25,6 @@
         touch-action: none;
       }
 
-      /* Phaser canvas 挂载容器，负责居中 */
       #game-container {
         position: fixed;
         inset: 0;
@@ -41,12 +40,11 @@
         touch-action: none;
       }
 
-      /* 手机横屏旋转提示 */
       #rotate-hint {
         display: none;
         position: fixed;
         inset: 0;
-        background: #1a1a2e;
+        background: #0a1a0a;
         flex-direction: column;
         justify-content: center;
         align-items: center;
@@ -54,7 +52,7 @@
         z-index: 9999;
       }
       #rotate-hint span { font-size: 56px; animation: rotate-icon 1.5s ease-in-out infinite; }
-      #rotate-hint p { color: #aaaacc; font-size: 18px; font-family: sans-serif; }
+      #rotate-hint p { color: #aaccaa; font-size: 18px; font-family: sans-serif; }
       @keyframes rotate-icon {
         0%, 100% { transform: rotate(0deg); }
         50%       { transform: rotate(90deg); }

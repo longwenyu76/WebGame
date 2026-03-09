@@ -327,7 +327,7 @@ export class GameScene extends Phaser.Scene {
     const cx = CANVAS_WIDTH / 2;
     const modeLabel = this.mode === 'classic' ? '经典' : '增强';
 
-    this.add.text(GRID_OFFSET_X, 8, `贪吃蛇 · ${modeLabel}`, {
+    this.add.text(GRID_OFFSET_X, 8, `贪吃的小龙 · ${modeLabel}`, {
       fontSize: '18px', color: '#44ff44', fontFamily: FONT_FAMILY,
     });
 

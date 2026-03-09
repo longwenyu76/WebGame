@@ -14,12 +14,15 @@ export class MenuScene extends Phaser.Scene {
   create(): void {
     const cx = CANVAS_WIDTH / 2;
 
-    this.add.text(cx, 160, '俄罗斯方块', {
+    this.add.text(cx, 148, '方块消除', {
       fontSize: '48px', color: '#00f0f0', fontStyle: 'bold', padding: PAD, fontFamily: FONT,
+    }).setOrigin(0.5);
+    this.add.text(cx, 200, 'Block Puzzle', {
+      fontSize: '18px', color: '#337799', fontFamily: FONT,
     }).setOrigin(0.5);
 
     const highScore = StorageUtil.getHighScore();
-    this.add.text(cx, 248, `最高分: ${highScore}`, {
+    this.add.text(cx, 228, `最高分: ${highScore}`, {
       fontSize: '24px', color: '#aaaaaa', padding: PAD, fontFamily: FONT,
     }).setOrigin(0.5);
 

@@ -1,7 +1,7 @@
 {
-  "name": "snake-game",
+  "name": "hungry-loong",
   "version": "1.0.0",
-  "description": "Snake game built with Phaser 3 and TypeScript",
+  "description": "贪吃的小龙 (Hungry Loong) — 经典移动游戏，基于 Phaser 3 + TypeScript",
   "scripts": {
     "dev": "webpack serve --config webpack.config.js --env development",
     "build": "webpack --config webpack.config.js --env production"

@@ -21,10 +21,13 @@ export class MenuScene extends Phaser.Scene {
     this.drawSnakeDecoration(cx);
 
     // ── 标题 ──────────────────────────────────────────────────────────────────
-    this.add.text(cx, 110, '贪吃蛇', {
-      fontSize: '60px', color: '#44ff44', fontStyle: 'bold',
+    this.add.text(cx, 98, '贪吃的小龙', {
+      fontSize: '52px', color: '#44ff44', fontStyle: 'bold',
       padding: PAD, fontFamily: FONT_FAMILY,
       stroke: '#004400', strokeThickness: 5,
+    }).setOrigin(0.5);
+    this.add.text(cx, 155, 'Hungry Loong', {
+      fontSize: '18px', color: '#337733', fontFamily: FONT_FAMILY,
     }).setOrigin(0.5);
 
     // ── 最高分 ─────────────────────────────────────────────────────────────────

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>打砖块 关卡编辑器</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #0a0a1a;
+  color: #ccccdd;
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+  padding: 16px;
+}
+
+h1 {
+  color: #8888ff;
+  font-size: 22px;
+  margin-bottom: 14px;
+  letter-spacing: 2px;
+}
+
+/* ── Main layout ─────────────────────────────────────── */
+#main {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+/* ── Grid area ─────────────────────────────────────────── */
+#editor-wrap {
+  flex-shrink: 0;
+}
+
+#grid-header {
+  display: grid;
+  grid-template-columns: 22px repeat(10, 46px);
+  gap: 2px;
+  margin-bottom: 2px;
+}
+#grid-header .col-num {
+  text-align: center;
+  font-size: 11px;
+  color: #444466;
+}
+
+#grid-container {
+  display: grid;
+  grid-template-columns: 22px repeat(10, 46px);
+  gap: 2px;
+}
+
+.row-num {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 4px;
+  font-size: 11px;
+  color: #444466;
+  cursor: pointer;
+  user-select: none;
+}
+.row-num:hover { color: #8888ff; }
+
+.cell {
+  width: 46px;
+  height: 24px;
+  border: 1px solid #00000066;
+  border-radius: 2px;
+  cursor: crosshair;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  transition: filter 0.05s;
+  position: relative;
+}
+.cell:hover { filter: brightness(1.35); }
+.cell.empty  { background: #0a0a1a; opacity: 0.35; }
+.cell.normal { /* color set by JS */ }
+
+/* ── Side panel ────────────────────────────────────────── */
+#panel {
+  flex: 1;
+  min-width: 220px;
+  max-width: 270px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section {
+  background: #111128;
+  border: 1px solid #222244;
+  border-radius: 6px;
+  padding: 12px;
+}
+.section h2 {
+  font-size: 13px;
+  color: #6666aa;
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+}
+
+/* Palette */
+.palette-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.palette-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.1s, background 0.1s;
+}
+.palette-item:hover { background: #1a1a33; }
+.palette-item.selected { border-color: #6666ff; background: #1a1a44; }
+
+.swatch {
+  width: 36px;
+  height: 16px;
+  border-radius: 2px;
+  border: 1px solid #ffffff22;
+  flex-shrink: 0;
+}
+
+.palette-label {
+  font-size: 13px;
+  color: #aaaacc;
+}
+
+/* Powerup sub-selector */
+#powerup-picker {
+  margin-top: 8px;
+  display: none;
+}
+#powerup-picker.visible { display: block; }
+#powerup-picker label {
+  display: block;
+  font-size: 12px;
+  color: #666699;
+  margin-bottom: 4px;
+}
+#powerup-select {
+  width: 100%;
+  background: #0e0e22;
+  color: #ccccee;
+  border: 1px solid #333366;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+#powerup-select:focus { outline: 1px solid #6666ff; }
+
+/* Settings */
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.field label {
+  font-size: 12px;
+  color: #666699;
+  width: 56px;
+  flex-shrink: 0;
+}
+.field input {
+  flex: 1;
+  background: #0e0e22;
+  color: #ccccee;
+  border: 1px solid #333366;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 13px;
+}
+.field input:focus { outline: 1px solid #6666ff; }
+
+/* Buttons */
+.btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+button {
+  padding: 6px 14px;
+  border: 1px solid #333366;
+  border-radius: 4px;
+  background: #111133;
+  color: #aaaacc;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  transition: background 0.1s, color 0.1s;
+}
+button:hover { background: #1a1a44; color: #ffffff; }
+button:active { background: #222266; }
+button.danger { border-color: #662222; color: #cc6666; }
+button.danger:hover { background: #331111; color: #ff6666; }
+button.primary { border-color: #3344aa; color: #8888ff; }
+button.primary:hover { background: #111144; color: #aaaaff; }
+
+/* ── Export area ───────────────────────────────────────── */
+#export-area {
+  margin-top: 16px;
+  background: #111128;
+  border: 1px solid #222244;
+  border-radius: 6px;
+  padding: 12px;
+}
+#export-area h2 {
+  font-size: 13px;
+  color: #6666aa;
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+
+#output {
+  width: 100%;
+  height: 180px;
+  background: #080814;
+  color: #88ddaa;
+  border: 1px solid #222244;
+  border-radius: 4px;
+  padding: 10px;
+  font-family: "Consolas", "Monaco", monospace;
+  font-size: 12px;
+  resize: vertical;
+  outline: none;
+  line-height: 1.5;
+}
+
+#export-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+#copy-status {
+  font-size: 12px;
+  color: #44cc88;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+#copy-status.show { opacity: 1; }
+
+/* ── Keyboard hint ─────────────────────────────────────── */
+#hotkey-hint {
+  margin-top: 10px;
+  font-size: 11px;
+  color: #333355;
+  line-height: 1.8;
+}
+#hotkey-hint span { color: #444466; }
+</style>
+</head>
+<body>
+
+<h1>打砖块 关卡编辑器</h1>
+
+<div id="main">
+  <!-- Left: grid -->
+  <div id="editor-wrap">
+    <div id="grid-header">
+      <div></div><!-- corner spacer -->
+    </div>
+    <div id="grid-container"></div>
+  </div>
+
+  <!-- Right: panel -->
+  <div id="panel">
+    <!-- Palette -->
+    <div class="section">
+      <h2>砖块类型</h2>
+      <div class="palette-grid" id="palette"></div>
+
+      <div id="powerup-picker">
+        <label>道具种类：</label>
+        <select id="powerup-select">
+          <option value="wide_paddle">宽板</option>
+          <option value="narrow_paddle">窄板</option>
+          <option value="fast_ball">快球</option>
+          <option value="slow_ball">慢球</option>
+          <option value="multi_ball">多球</option>
+          <option value="fire_ball">火球</option>
+          <option value="extra_life">+命</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="section">
+      <h2>关卡设置</h2>
+      <div class="field">
+        <label>关卡 ID</label>
+        <input type="number" id="level-id" value="6" min="1" max="999">
+      </div>
+      <div class="field">
+        <label>关卡名</label>
+        <input type="text" id="level-name" placeholder="新关卡" maxlength="12">
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="section">
+      <h2>操作</h2>
+      <div class="btn-row">
+        <button id="btn-undo" title="Ctrl+Z">撤销</button>
+        <button id="btn-fill-row" title="Shift+点击行号填充当前笔刷">填行</button>
+        <button id="btn-clear" class="danger">清空</button>
+      </div>
+      <div id="hotkey-hint">
+        <span>快捷键：</span><br>
+        1 空格 &nbsp; 2 普通 &nbsp; 3 加固 &nbsp; 4 坚固<br>
+        5 铁砖 &nbsp; 6 道具<br>
+        Ctrl+Z 撤销 &nbsp; Shift+点行号 填满一行
+      </div>
+    </div>
+
+    <!-- Export button -->
+    <button id="btn-export" class="primary" style="font-size:15px;padding:10px;">
+      ▶ 生成代码
+    </button>
+  </div>
+</div>
+
+<!-- Export output -->
+<div id="export-area">
+  <h2>导出代码（粘贴到 src/data/levels.ts 的 LEVELS 数组末尾）</h2>
+  <textarea id="output" readonly placeholder="点击「生成代码」按钮后，代码将出现在这里…"></textarea>
+  <div id="export-actions">
+    <button id="btn-copy">复制到剪贴板</button>
+    <span id="copy-status">✓ 已复制！</span>
+  </div>
+</div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────────
+const COLS = 10, ROWS = 12;
+
+const BRICK_DEFS = [
+  { type: 'empty',      label: '空格',  color: '#0a0a1a',  border: '#222244' },
+  { type: 'normal',     label: '普通砖', color: null,       border: '#00000066' },
+  { type: 'reinforced', label: '加固砖 ×2', color: '#8866aa', border: '#aa88cc' },
+  { type: 'solid',      label: '坚固砖 ×3', color: '#336688', border: '#4488aa' },
+  { type: 'iron',       label: '铁砖 ∞', color: '#778899', border: '#aabbcc' },
+  { type: 'powerup',    label: '道具砖', color: '#1a1a44', border: '#8888ff' },
+];
+
+const POWERUP_LABELS = {
+  wide_paddle: '宽板', narrow_paddle: '窄板',
+  fast_ball: '快球',   slow_ball: '慢球',
+  multi_ball: '多球',  fire_ball: '火球',
+  extra_life: '+命',
+};
+
+const POWERUP_COLORS = {
+  wide_paddle: '#44ff44', narrow_paddle: '#ff3333',
+  fast_ball: '#ff8800',   slow_ball: '#4488ff',
+  multi_ball: '#ffdd00',  fire_ball: '#ff4400',
+  extra_life: '#ff66aa',
+};
+
+const ROW_COLORS = [
+  '#ff3333','#ff6600','#ff9900','#ffcc00','#99cc00',
+  '#33cc33','#00ccaa','#33aaff','#6633ff','#cc33cc','#ff3399','#ff6699',
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let gridData = Array.from({ length: ROWS }, () =>
+  Array.from({ length: COLS }, () => ({ type: 'empty', powerup: null }))
+);
+let selectedType    = 'normal';
+let selectedPowerup = 'wide_paddle';
+let isMouseDown     = false;
+let undoStack       = [];
+let fillRowMode     = false; // true = next row-num click fills row
+
+// ── Grid init ────────────────────────────────────────────────────────────────
+function buildGrid() {
+  // Column header numbers
+  const header = document.getElementById('grid-header');
+  for (let c = 0; c < COLS; c++) {
+    const d = document.createElement('div');
+    d.className = 'col-num';
+    d.textContent = c + 1;
+    header.appendChild(d);
+  }
+
+  const container = document.getElementById('grid-container');
+  for (let r = 0; r < ROWS; r++) {
+    // Row label
+    const rowLabel = document.createElement('div');
+    rowLabel.className = 'row-num';
+    rowLabel.textContent = r + 1;
+    rowLabel.title = 'Shift+点击 或 点击后点「填行」按钮，填满本行';
+    rowLabel.addEventListener('click', (e) => {
+      if (e.shiftKey || fillRowMode) {
+        saveUndo();
+        for (let c = 0; c < COLS; c++) paintCell(r, c);
+        fillRowMode = false;
+        document.getElementById('btn-fill-row').textContent = '填行';
+      }
+    });
+    container.appendChild(rowLabel);
+
+    // Cells
+    for (let c = 0; c < COLS; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell empty';
+      cell.id = `cell-${r}-${c}`;
+      cell.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        saveUndo();
+        isMouseDown = true;
+        paintCell(r, c);
+      });
+      cell.addEventListener('mouseover', () => {
+        if (isMouseDown) paintCell(r, c);
+      });
+      cell.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        saveUndo();
+        eraseCell(r, c);
+      });
+      container.appendChild(cell);
+    }
+  }
+
+  document.addEventListener('mouseup', () => { isMouseDown = false; });
+}
+
+// ── Palette ───────────────────────────────────────────────────────────────────
+function buildPalette() {
+  const palette = document.getElementById('palette');
+  BRICK_DEFS.forEach(def => {
+    const item = document.createElement('div');
+    item.className = 'palette-item' + (def.type === selectedType ? ' selected' : '');
+    item.dataset.type = def.type;
+
+    const swatch = document.createElement('div');
+    swatch.className = 'swatch';
+    if (def.type === 'normal') {
+      // Show a gradient of row colors
+      swatch.style.background = `linear-gradient(to right, ${ROW_COLORS.slice(0,4).join(',')})`;
+    } else {
+      swatch.style.background = def.color;
+    }
+    swatch.style.borderColor = def.border;
+
+    const label = document.createElement('span');
+    label.className = 'palette-label';
+    label.textContent = def.label;
+
+    item.appendChild(swatch);
+    item.appendChild(label);
+    item.addEventListener('click', () => selectType(def.type));
+    palette.appendChild(item);
+  });
+}
+
+function selectType(type) {
+  selectedType = type;
+  document.querySelectorAll('.palette-item').forEach(el => {
+    el.classList.toggle('selected', el.dataset.type === type);
+  });
+  const picker = document.getElementById('powerup-picker');
+  picker.classList.toggle('visible', type === 'powerup');
+}
+
+// ── Paint / erase ─────────────────────────────────────────────────────────────
+function paintCell(row, col) {
+  const data = gridData[row][col];
+  if (selectedType === 'powerup') {
+    data.type   = 'powerup';
+    data.powerup = selectedPowerup;
+  } else {
+    data.type   = selectedType;
+    data.powerup = null;
+  }
+  renderCell(row, col);
+}
+
+function eraseCell(row, col) {
+  gridData[row][col] = { type: 'empty', powerup: null };
+  renderCell(row, col);
+}
+
+function renderCell(row, col) {
+  const el   = document.getElementById(`cell-${row}-${col}`);
+  const data = gridData[row][col];
+  el.className = 'cell';
+
+  let bg, border, text = '', textColor = '#ffffff';
+
+  switch (data.type) {
+    case 'empty':
+      bg = '#0a0a1a'; border = '#1a1a2a'; text = ''; el.classList.add('empty'); break;
+    case 'normal':
+      bg = ROW_COLORS[row % ROW_COLORS.length]; border = '#00000066'; break;
+    case 'reinforced':
+      bg = '#8866aa'; border = '#aa88cc'; text = '×2'; break;
+    case 'solid':
+      bg = '#336688'; border = '#4488aa'; text = '×3'; break;
+    case 'iron':
+      bg = '#778899'; border = '#aabbcc'; text = '⚙'; break;
+    case 'powerup':
+      bg = POWERUP_COLORS[data.powerup] || '#222244';
+      border = '#ffffff88';
+      text = POWERUP_LABELS[data.powerup] || '?';
+      textColor = '#000000cc';
+      break;
+    default:
+      bg = '#333'; border = '#555';
+  }
+
+  el.style.background    = bg;
+  el.style.borderColor   = border;
+  el.style.color         = textColor;
+  el.textContent         = text;
+  el.title               = data.type + (data.powerup ? ` (${data.powerup})` : '');
+}
+
+function renderGrid() {
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      renderCell(r, c);
+}
+
+// ── Undo ──────────────────────────────────────────────────────────────────────
+function saveUndo() {
+  undoStack.push(JSON.parse(JSON.stringify(gridData)));
+  if (undoStack.length > 60) undoStack.shift();
+}
+
+function undo() {
+  if (undoStack.length === 0) return;
+  gridData = undoStack.pop();
+  renderGrid();
+}
+
+// ── Code generation ───────────────────────────────────────────────────────────
+function generateCode() {
+  const id   = parseInt(document.getElementById('level-id').value) || 6;
+  const name = document.getElementById('level-name').value.trim() || '新关卡';
+
+  // Find last non-empty row
+  let lastRow = 0;
+  for (let r = 0; r < ROWS; r++) {
+    if (gridData[r].some(c => c.type !== 'empty')) lastRow = r;
+  }
+
+  const rowLines = [];
+  for (let r = 0; r <= lastRow; r++) {
+    const cells = gridData[r].map(cell => {
+      switch (cell.type) {
+        case 'empty':      return 'E()';
+        case 'normal':     return 'N()';
+        case 'reinforced': return 'R()';
+        case 'solid':      return 'S()';
+        case 'iron':       return 'I()';
+        case 'powerup':    return `P('${cell.powerup}')`;
+        default:           return 'E()';
+      }
+    });
+    rowLines.push(`      [${cells.join(', ')}],`);
+  }
+
+  const divider = '─'.repeat(54);
+  return [
+    `  // ── 第 ${id} 关：${name} ${divider}`,
+    `  {`,
+    `    id: ${id}, name: '${name}',`,
+    `    grid: [`,
+    ...rowLines,
+    `    ],`,
+    `  },`,
+  ].join('\n');
+}
+
+// ── Buttons ───────────────────────────────────────────────────────────────────
+document.getElementById('btn-export').addEventListener('click', () => {
+  document.getElementById('output').value = generateCode();
+});
+
+document.getElementById('btn-copy').addEventListener('click', async () => {
+  const text = document.getElementById('output').value;
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // Fallback
+    const ta = document.getElementById('output');
+    ta.select();
+    document.execCommand('copy');
+  }
+  const status = document.getElementById('copy-status');
+  status.classList.add('show');
+  setTimeout(() => status.classList.remove('show'), 1800);
+});
+
+document.getElementById('btn-undo').addEventListener('click', undo);
+
+document.getElementById('btn-clear').addEventListener('click', () => {
+  if (!confirm('确认清空整个编辑区？')) return;
+  saveUndo();
+  gridData = Array.from({ length: ROWS }, () =>
+    Array.from({ length: COLS }, () => ({ type: 'empty', powerup: null }))
+  );
+  renderGrid();
+});
+
+document.getElementById('btn-fill-row').addEventListener('click', () => {
+  fillRowMode = !fillRowMode;
+  document.getElementById('btn-fill-row').textContent = fillRowMode ? '选择行…' : '填行';
+});
+
+document.getElementById('powerup-select').addEventListener('change', (e) => {
+  selectedPowerup = e.target.value;
+});
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────────
+const TYPE_KEYS = { '1': 'empty', '2': 'normal', '3': 'reinforced', '4': 'solid', '5': 'iron', '6': 'powerup' };
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+  if (e.ctrlKey && e.key === 'z') { undo(); return; }
+  if (TYPE_KEYS[e.key]) selectType(TYPE_KEYS[e.key]);
+});
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+buildGrid();
+buildPalette();
+renderGrid();
+</script>
+</body>
+</html>
