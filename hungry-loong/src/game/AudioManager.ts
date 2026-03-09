@@ -4,9 +4,20 @@
  */
 export class AudioManager {
   private ctx: AudioContext | null = null;
+  private visListenerAdded = false;
 
   private getCtx(): AudioContext {
-    if (!this.ctx) this.ctx = new AudioContext();
+    if (!this.ctx) {
+      this.ctx = new AudioContext();
+      if (!this.visListenerAdded) {
+        this.visListenerAdded = true;
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible' && this.ctx?.state === 'suspended') {
+            void this.ctx.resume();
+          }
+        });
+      }
+    }
     if (this.ctx.state === 'suspended') this.ctx.resume();
     return this.ctx;
   }

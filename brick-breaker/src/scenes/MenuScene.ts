@@ -14,6 +14,14 @@ export class MenuScene extends Phaser.Scene {
   create(): void {
     const cx = CANVAS_WIDTH / 2;
 
+    // ── 返回平台 ──────────────────────────────────────────────────────────────
+    const backBtn = this.add.text(12, 12, '← 游戏平台', {
+      fontSize: '14px', color: '#445566', fontFamily: FONT_FAMILY,
+    }).setInteractive({ useHandCursor: true });
+    backBtn.on('pointerover', () => backBtn.setColor('#aabbcc'));
+    backBtn.on('pointerout',  () => backBtn.setColor('#445566'));
+    backBtn.on('pointerdown', () => { window.location.href = '../'; });
+
     // ── 装饰砖块 ──────────────────────────────────────────────────────────────
     this.drawDecoBricks();
 

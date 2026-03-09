@@ -4,9 +4,20 @@
  */
 export class AudioManager {
   private ctx: AudioContext | null = null;
+  private visListenerAdded = false;
 
   private getCtx(): AudioContext {
-    if (!this.ctx) this.ctx = new AudioContext();
+    if (!this.ctx) {
+      this.ctx = new AudioContext();
+      if (!this.visListenerAdded) {
+        this.visListenerAdded = true;
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible' && this.ctx?.state === 'suspended') {
+            void this.ctx.resume();
+          }
+        });
+      }
+    }
     if (this.ctx.state === 'suspended') void this.ctx.resume();
     return this.ctx;
   }
@@ -99,5 +110,11 @@ export class AudioManager {
   playLifeLost(): void {
     this.tone(440, 0.08, 'sine', 0.22);
     this.tone(280, 0.18, 'sine', 0.18, undefined, 70);
+  }
+
+  /** Ball bounces off an iron (indestructible) brick — metallic clank. */
+  playIronHit(): void {
+    this.tone(160, 0.05, 'sawtooth', 0.20, 120);
+    this.tone(80,  0.08, 'square',   0.10, 60, 20);
   }
 }

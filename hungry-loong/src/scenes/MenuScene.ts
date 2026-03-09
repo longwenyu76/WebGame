@@ -17,6 +17,14 @@ export class MenuScene extends Phaser.Scene {
   create(): void {
     const cx = CANVAS_WIDTH / 2;
 
+    // ── 返回平台 ──────────────────────────────────────────────────────────────
+    const backBtn = this.add.text(12, 12, '← 游戏平台', {
+      fontSize: '14px', color: '#335533', fontFamily: FONT_FAMILY,
+    }).setInteractive({ useHandCursor: true });
+    backBtn.on('pointerover', () => backBtn.setColor('#88bb88'));
+    backBtn.on('pointerout',  () => backBtn.setColor('#335533'));
+    backBtn.on('pointerdown', () => { window.location.href = '../'; });
+
     // ── 装饰蛇体 ──────────────────────────────────────────────────────────────
     this.drawSnakeDecoration(cx);
 

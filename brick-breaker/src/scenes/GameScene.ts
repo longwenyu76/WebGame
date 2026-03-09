@@ -286,6 +286,7 @@ export class GameScene extends Phaser.Scene {
       if (isIron) {
         // Iron is immune to all damage — always reflects, even fire ball.
         this.reflectBall(ball, eL, eR, eT, eB);
+        this.audio.playIronHit();
         break;
       }
 

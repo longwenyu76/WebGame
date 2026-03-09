@@ -53,6 +53,19 @@ export class AudioManager {
     this.sfxVolume    = s.sfxVolume;
     this.musicEnabled = s.musicEnabled;
     this.sfxEnabled   = s.sfxEnabled;
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && this.ctx?.state === 'suspended') {
+        void this.ctx.resume().then(() => {
+          // Restart BGM loop if it was running before screen lock
+          if (this.bgmRunning && this.musicEnabled) {
+            this.stopBGM();
+            this.bgmRunning = true;
+            this.runBGMLoop();
+          }
+        });
+      }
+    });
   }
 
   // ── 上下文（用户首次交互后激活）──────────────────────────────────────────────
