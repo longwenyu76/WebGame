@@ -24,6 +24,7 @@ jobs:
             block-puzzle/package-lock.json
             hungry-loong/package-lock.json
             brick-breaker/package-lock.json
+            2048/package-lock.json
 
       # ── Block Puzzle ─────────────────────────────────────────────────────────
       - name: Install block-puzzle dependencies
@@ -52,19 +53,30 @@ jobs:
         working-directory: brick-breaker
         run: npm run build
 
+      # ── 2048 Challenge ───────────────────────────────────────────────────────
+      - name: Install 2048 dependencies
+        working-directory: 2048
+        run: npm ci
+
+      - name: Build 2048
+        working-directory: 2048
+        run: npm run build
+
       # ── Assemble deploy directory ────────────────────────────────────────────
       # 目录结构：
       #   deploy/index.html         → 平台首页
       #   deploy/block-puzzle/      → 方块消除
       #   deploy/hungry-loong/      → 贪吃的小龙
       #   deploy/brick-breaker/     → 敲砖英雄
+      #   deploy/2048/              → 2048 挑战
       - name: Assemble deploy directory
         run: |
-          mkdir -p deploy/block-puzzle deploy/hungry-loong deploy/brick-breaker
+          mkdir -p deploy/block-puzzle deploy/hungry-loong deploy/brick-breaker deploy/2048
           cp index.html deploy/index.html
           cp -r block-puzzle/dist/.  deploy/block-puzzle/
           cp -r hungry-loong/dist/.  deploy/hungry-loong/
           cp -r brick-breaker/dist/. deploy/brick-breaker/
+          cp -r 2048/dist/.          deploy/2048/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
