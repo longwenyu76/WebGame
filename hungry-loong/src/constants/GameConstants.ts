@@ -7,7 +7,7 @@ export const CELL_SIZE     = 20;
 export const GRID_COLS     = 22;
 export const GRID_ROWS     = 28;
 export const GRID_OFFSET_X = 20;  // 网格左边距
-export const GRID_OFFSET_Y = 60;  // 网格上边距（顶部信息栏高度）
+export const GRID_OFFSET_Y = 80;  // 网格上边距（顶部信息栏高度）
 
 // 触控区（移动端手势识别区域起始 Y）
 export const TOUCH_ZONE_Y  = 630;

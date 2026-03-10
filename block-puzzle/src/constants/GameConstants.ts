@@ -34,7 +34,7 @@ export const SCORE_TABLE: Record<number, number> = {
 };
 
 // 等级提升（每N行升一级）
-export const LINES_PER_LEVEL = 20;
+export const LINES_PER_LEVEL = 10;
 
 // 下落速度（毫秒/格），等级1起始，每级递减90ms，最低100ms
 export const getDropInterval = (level: number): number => {

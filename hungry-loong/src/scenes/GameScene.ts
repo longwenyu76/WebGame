@@ -260,7 +260,7 @@ export class GameScene extends Phaser.Scene {
       slow:   '#44ccff',
       score:  '#ffaa00',
     };
-    const size = type === 'score' ? '16px' : '14px';
+    const size = type === 'score' ? '30px' : '26px';
 
     const txt = this.add.text(px, py, `+${points}`, {
       fontSize: size, color: colorMap[type], fontFamily: FONT_FAMILY,
@@ -327,37 +327,30 @@ export class GameScene extends Phaser.Scene {
     const cx = CANVAS_WIDTH / 2;
     const modeLabel = this.mode === 'classic' ? '经典' : '增强';
 
-    this.add.text(GRID_OFFSET_X, 8, `贪吃的小龙 · ${modeLabel}`, {
-      fontSize: '18px', color: '#44ff44', fontFamily: FONT_FAMILY,
+    this.add.text(GRID_OFFSET_X, 5, `贪吃的小龙 · ${modeLabel}`, {
+      fontSize: '26px', color: '#44ff44', fontFamily: FONT_FAMILY,
     });
 
-    const pauseBtn = this.add.text(CANVAS_WIDTH - GRID_OFFSET_X, 8, '[P] 暂停', {
-      fontSize: '16px', color: '#446644', fontFamily: FONT_FAMILY,
+    const pauseBtn = this.add.text(CANVAS_WIDTH - GRID_OFFSET_X, 5, '[P] 暂停', {
+      fontSize: '22px', color: '#446644', fontFamily: FONT_FAMILY,
     }).setOrigin(1, 0).setInteractive({ useHandCursor: true });
     pauseBtn.on('pointerover', () => pauseBtn.setColor('#88bb88'));
     pauseBtn.on('pointerout',  () => pauseBtn.setColor('#446644'));
     pauseBtn.on('pointerdown', () => this.togglePause());
 
-    this.add.text(GRID_OFFSET_X, 34, 'SCORE', {
-      fontSize: '11px', color: '#336633', fontFamily: FONT_FAMILY,
-    });
-    this.scoreText = this.add.text(GRID_OFFSET_X, 46, '0', {
-      fontSize: '14px', color: '#ffffff', fontFamily: FONT_FAMILY,
-    });
+    this.add.graphics()
+      .lineStyle(1, 0x224422, 1)
+      .lineBetween(0, 36, CANVAS_WIDTH, 36);
 
-    this.add.text(cx - 30, 34, 'LENGTH', {
-      fontSize: '11px', color: '#336633', fontFamily: FONT_FAMILY,
+    this.scoreText = this.add.text(GRID_OFFSET_X, 44, '分: 0', {
+      fontSize: '24px', color: '#ffffff', fontFamily: FONT_FAMILY,
+    });
+    this.lengthText = this.add.text(cx, 44, '长: 3', {
+      fontSize: '24px', color: '#aaffaa', fontFamily: FONT_FAMILY,
     }).setOrigin(0.5, 0);
-    this.lengthText = this.add.text(cx - 30, 46, '3', {
-      fontSize: '14px', color: '#aaffaa', fontFamily: FONT_FAMILY,
-    }).setOrigin(0.5, 0);
-
-    this.add.text(CANVAS_WIDTH - GRID_OFFSET_X, 34, 'BEST', {
-      fontSize: '11px', color: '#336633', fontFamily: FONT_FAMILY,
-    }).setOrigin(1, 0);
-    this.bestText = this.add.text(CANVAS_WIDTH - GRID_OFFSET_X, 46,
-      String(StorageUtil.getBest(this.mode)), {
-        fontSize: '14px', color: '#ffdd44', fontFamily: FONT_FAMILY,
+    this.bestText = this.add.text(CANVAS_WIDTH - GRID_OFFSET_X, 44,
+      `高: ${StorageUtil.getBest(this.mode)}`, {
+        fontSize: '24px', color: '#ffdd44', fontFamily: FONT_FAMILY,
       }).setOrigin(1, 0);
 
     this.add.graphics()
@@ -367,10 +360,10 @@ export class GameScene extends Phaser.Scene {
 
   /** Food legend + buff bar shown below the grid in enhanced mode. */
   private createEnhancedHUD(): void {
-    const SEP_Y = GRID_BOTTOM + 2;
-    const LY1   = GRID_BOTTOM + 14;  // legend row 1
-    const LY2   = LY1 + 22;          // legend row 2
-    const BUFF_Y = LY2 + 28;         // buff bar row
+    const SEP_Y  = GRID_BOTTOM + 2;
+    const LY1    = GRID_BOTTOM + 18;  // legend row 1
+    const LY2    = LY1 + 28;          // legend row 2
+    const BUFF_Y = LY2 + 34;          // buff bar row
     const BAR_W  = 200;
     const OX     = GRID_OFFSET_X;
 
@@ -390,30 +383,30 @@ export class GameScene extends Phaser.Scene {
     for (const [color, label, lx, ly] of legends) {
       const hex = '#' + color.toString(16).padStart(6, '0');
       this.add.text(lx, ly, label, {
-        fontSize: '12px', color: hex, fontFamily: FONT_FAMILY,
+        fontSize: '22px', color: hex, fontFamily: FONT_FAMILY,
       });
     }
 
     // Buff label
     this.buffLabel = this.add.text(OX, BUFF_Y, '', {
-      fontSize: '13px', color: '#446644', fontFamily: FONT_FAMILY,
+      fontSize: '24px', color: '#446644', fontFamily: FONT_FAMILY,
     }).setOrigin(0, 0.5);
 
     // Buff progress bar (background)
     const barX = CANVAS_WIDTH - GRID_OFFSET_X - BAR_W / 2;
-    this.buffBgBar = this.add.rectangle(barX, BUFF_Y, BAR_W, 12, 0x113311)
+    this.buffBgBar = this.add.rectangle(barX, BUFF_Y, BAR_W, 14, 0x113311)
       .setVisible(false);
 
     // Buff progress bar (fill, left-anchored)
     this.buffFill = this.add.rectangle(
-      barX - BAR_W / 2, BUFF_Y, 0, 10, 0x44ff44
+      barX - BAR_W / 2, BUFF_Y, 0, 12, 0x44ff44
     ).setOrigin(0, 0.5).setVisible(false);
   }
 
   private updateHUD(): void {
-    this.scoreText.setText(String(this.score));
-    this.lengthText.setText(String(this.snake.length));
-    this.bestText.setText(String(Math.max(this.score, StorageUtil.getBest(this.mode))));
+    this.scoreText.setText(`分: ${this.score}`);
+    this.lengthText.setText(`长: ${this.snake.length}`);
+    this.bestText.setText(`高: ${Math.max(this.score, StorageUtil.getBest(this.mode))}`);
   }
 
   private updateBuffHUD(): void {

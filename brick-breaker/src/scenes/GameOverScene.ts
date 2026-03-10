@@ -10,6 +10,7 @@ export class GameOverScene extends Phaser.Scene {
     const isNew   = data.score > StorageUtil.getHighScore();
     StorageUtil.saveHighScore(data.score);
     StorageUtil.saveBestLevel(data.levelIndex + 1);
+    StorageUtil.clearSaveSlot();
 
     this.add.rectangle(cx, 320, 360, 300, 0x000000, 0.90)
       .setStrokeStyle(1, 0x333366);

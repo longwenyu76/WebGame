@@ -55,11 +55,14 @@ export class MenuScene extends Phaser.Scene {
       .lineStyle(1, 0x333366, 1)
       .lineBetween(cx - 160, 242, cx + 160, 242);
 
-    // ── 开始按钮 ───────────────────────────────────────────────────────────────
-    const startBg = this.add.rectangle(cx, 320, 220, 56, 0x0a0a2a)
+    // ── 开始 / 继续按钮 ────────────────────────────────────────────────────────
+    const save = StorageUtil.getSaveSlot();
+
+    // 新游戏按钮
+    const startBg = this.add.rectangle(cx, save ? 300 : 320, 220, 56, 0x0a0a2a)
       .setStrokeStyle(2, 0x4444ff, 1);
 
-    const startBtn = this.add.text(cx, 320, '开 始 游 戏', {
+    const startBtn = this.add.text(cx, save ? 300 : 320, '新 游 戏', {
       fontSize: '28px', color: '#6666ff', fontFamily: FONT_FAMILY,
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
@@ -70,6 +73,26 @@ export class MenuScene extends Phaser.Scene {
     startBtn.on('pointerover', hover).on('pointerout', out).on('pointerdown', go);
     startBg.setInteractive({ useHandCursor: true })
       .on('pointerover', hover).on('pointerout', out).on('pointerdown', go);
+
+    // 继续游戏按钮（有存档时显示）
+    if (save) {
+      const contBg = this.add.rectangle(cx, 376, 220, 56, 0x0a1a0a)
+        .setStrokeStyle(2, 0x44aa44, 1);
+
+      const contBtn = this.add.text(cx, 376,
+        `继续第 ${save.levelIndex + 1} 关（${save.lives} 命）`, {
+          fontSize: '22px', color: '#44cc44', fontFamily: FONT_FAMILY,
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+      const hoverC = () => { contBtn.setColor('#ffffff'); contBg.setFillStyle(0x113311); };
+      const outC   = () => { contBtn.setColor('#44cc44'); contBg.setFillStyle(0x0a1a0a); };
+      const goC    = () => this.scene.start(SCENE_KEYS.GAME, {
+        levelIndex: save.levelIndex, score: 0, lives: save.lives,
+      });
+      contBtn.on('pointerover', hoverC).on('pointerout', outC).on('pointerdown', goC);
+      contBg.setInteractive({ useHandCursor: true })
+        .on('pointerover', hoverC).on('pointerout', outC).on('pointerdown', goC);
+    }
 
     // ── 道具说明（简版） ───────────────────────────────────────────────────────
     this.add.text(cx, 400, '道 具 一 览', {

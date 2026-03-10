@@ -20,4 +20,18 @@ export const StorageUtil = {
       localStorage.setItem(STORAGE_KEYS.BEST_LEVEL, String(level));
     }
   },
+
+  getSaveSlot(): { levelIndex: number; lives: number } | null {
+    const raw = localStorage.getItem(STORAGE_KEYS.SAVE_SLOT);
+    if (!raw) return null;
+    try { return JSON.parse(raw) as { levelIndex: number; lives: number }; } catch { return null; }
+  },
+
+  saveSaveSlot(levelIndex: number, lives: number): void {
+    localStorage.setItem(STORAGE_KEYS.SAVE_SLOT, JSON.stringify({ levelIndex, lives }));
+  },
+
+  clearSaveSlot(): void {
+    localStorage.removeItem(STORAGE_KEYS.SAVE_SLOT);
+  },
 };

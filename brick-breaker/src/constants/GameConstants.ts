@@ -56,6 +56,7 @@ export const SCENE_KEYS = {
 export const STORAGE_KEYS = {
   HIGH_SCORE:  'breakout_high_score',
   BEST_LEVEL:  'breakout_best_level',
+  SAVE_SLOT:   'breakout_save',
 } as const;
 
 // ── 计分 ────────────────────────────────────────────────────────────────────

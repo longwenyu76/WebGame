@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import {
   CANVAS_WIDTH, CANVAS_HEIGHT,
-  BRICK_W, BRICK_H,
+  BRICK_W, BRICK_H, BRICK_AREA_X, BRICK_AREA_Y,
   PADDLE_W_NORMAL, PADDLE_H, PADDLE_Y,
   PADDLE_SCALE_MAX, PADDLE_SCALE_MIN,
   BALL_RADIUS, BALL_SPEED_BASE, BALL_SPEED_PER_LEVEL, BALL_SPEED_MAX, BALL_MAX_COUNT,
@@ -18,6 +18,7 @@ import { Ball }      from '../game/Ball';
 import { Paddle }    from '../game/Paddle';
 import { BrickGrid, BrickState } from '../game/BrickGrid';
 import { AudioManager }          from '../game/AudioManager';
+import { StorageUtil }            from '../utils/StorageUtil';
 
 const TOP_WALL_Y     = 50;
 const BALL_LOSS_Y    = CANVAS_HEIGHT;
@@ -51,11 +52,12 @@ export class GameScene extends Phaser.Scene {
   private audio!:     AudioManager;
 
   // ── game state ────────────────────────────────────────────────────────────
-  private levelIndex      = 0;
-  private score           = 0;
-  private lives           = INITIAL_LIVES;
-  private waitingToLaunch = true;
-  private isPaused        = false;
+  private levelIndex       = 0;
+  private score            = 0;
+  private lives            = INITIAL_LIVES;
+  private waitingToLaunch  = true;
+  private isPaused         = false;
+  private isLevelClearing  = false;
 
   // ── power-up state (reset each level) ────────────────────────────────────
   private paddleScale    = 1.0;
@@ -119,11 +121,16 @@ export class GameScene extends Phaser.Scene {
     this.particles       = [];
     this.ballTrails      = [];
 
+    this.isLevelClearing = false;
+
     this.audio     = new AudioManager();
     this.brickGrid = new BrickGrid(LEVELS[this.levelIndex]);
     this.paddle    = new Paddle(CANVAS_WIDTH / 2, PADDLE_Y, PADDLE_W_NORMAL, PADDLE_H);
     this.balls     = [];
     this.spawnBallOnPaddle();
+
+    // 存档：每次进入关卡时保存进度（死光/通关后会清除）
+    StorageUtil.saveSaveSlot(this.levelIndex, this.lives);
 
     this.gfx = this.add.graphics();
 
@@ -175,6 +182,14 @@ export class GameScene extends Phaser.Scene {
 
     if (Phaser.Input.Keyboard.JustDown(this.keyP)) {
       this.togglePause(); return;
+    }
+
+    // 过关动画播放中：只更新粒子和绘制，不做游戏逻辑
+    if (this.isLevelClearing) {
+      this.updateParticles(dt);
+      this.updateHUD();
+      this.drawAll();
+      return;
     }
 
     this.updatePaddle(dt);
@@ -506,22 +521,69 @@ export class GameScene extends Phaser.Scene {
   // Level clear
   // ─────────────────────────────────────────────────────────────────────────
   private levelClear(): void {
+    this.isLevelClearing = true;
+
     const bonus     = SCORE.LEVEL_CLEAR_BASE * (this.levelIndex + 1);
     this.score     += bonus;
     const nextIndex = this.levelIndex + 1;
-    this.audio.playLevelClear();
 
+    this.audio.playLevelClear();
+    this.spawnCelebrationBurst();
+
+    // 500ms 后闪光
+    this.time.delayedCall(500, () => this.showClearFlash());
+
+    // 1400ms 后切换场景
     if (nextIndex >= LEVELS.length) {
-      this.time.delayedCall(800, () => {
+      this.time.delayedCall(1400, () => {
         this.scene.start(SCENE_KEYS.GAME_CLEAR, { score: this.score, lives: this.lives });
       });
     } else {
-      this.time.delayedCall(800, () => {
+      this.time.delayedCall(1400, () => {
         this.scene.start(SCENE_KEYS.LEVEL_CLEAR, {
           levelIndex: this.levelIndex, score: this.score, lives: this.lives, bonus,
         });
       });
     }
+  }
+
+  private spawnCelebrationBurst(): void {
+    const colors = [
+      0xff3333, 0xff6600, 0xffcc00, 0x44ff44,
+      0x33aaff, 0x9933ff, 0xff33aa, 0xffffff,
+    ];
+    for (let i = 0; i < 60; i++) {
+      const x = BRICK_AREA_X + Math.random() * (CANVAS_WIDTH - BRICK_AREA_X * 2);
+      const y = BRICK_AREA_Y + Math.random() * 300;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 80 + Math.random() * 200;
+      this.particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        alpha: 1.0,
+        life:  0.9 + Math.random() * 0.6,
+        size:  3 + Math.random() * 5,
+      });
+    }
+  }
+
+  private showClearFlash(): void {
+    const flash = this.add.rectangle(
+      CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2,
+      CANVAS_WIDTH, CANVAS_HEIGHT,
+      0xffffff, 0,
+    ).setDepth(20);
+    this.tweens.add({
+      targets:  flash,
+      alpha:    { from: 0, to: 0.4 },
+      duration: 180,
+      yoyo:     true,
+      repeat:   1,
+      ease:     'Sine.easeInOut',
+      onComplete: () => flash.destroy(),
+    });
   }
 
   // ─────────────────────────────────────────────────────────────────────────

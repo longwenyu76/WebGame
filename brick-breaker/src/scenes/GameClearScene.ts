@@ -11,6 +11,7 @@ export class GameClearScene extends Phaser.Scene {
     const total     = data.score + lifeBonus;
     const isNew     = total > StorageUtil.getHighScore();
     StorageUtil.saveHighScore(total);
+    StorageUtil.clearSaveSlot();
 
     this.add.rectangle(cx, 330, 360, 320, 0x000000, 0.92)
       .setStrokeStyle(1, 0x4444aa);
