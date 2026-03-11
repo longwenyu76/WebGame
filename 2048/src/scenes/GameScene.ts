@@ -286,10 +286,7 @@ export class GameScene extends Phaser.Scene {
     this.undoWon      = this.won;
 
     const result = this.grid.move(dir);
-    if (!result.moved) {
-      this.undoSnapshot = null;   // discard snapshot — nothing to undo
-      return;
-    }
+    if (!result.moved) return;  // 棋盘没变，忽略这次按键，保留上一步的撤销快照
 
     this.setUndoEnabled(true);
     this.isAnimating = true;

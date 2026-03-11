@@ -1,0 +1,46 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/><meta name="mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><title>敲砖英雄 (Brick Breaker)</title><meta name="description" content="敲砖英雄 (Brick Breaker) — 经典弹球游戏"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/><link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet"/><style>* { margin: 0; padding: 0; box-sizing: border-box; }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        background-color: #0a0a1a;
+        overflow: hidden;
+        -webkit-user-select: none;
+        user-select: none;
+        overscroll-behavior: none;
+        touch-action: none;
+      }
+
+      #game-container {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: env(safe-area-inset-top) env(safe-area-inset-right)
+                 env(safe-area-inset-bottom) env(safe-area-inset-left);
+      }
+
+      canvas { display: block; touch-action: none; }
+
+      #rotate-hint {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: #0a0a1a;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        z-index: 9999;
+      }
+      #rotate-hint span { font-size: 56px; animation: rot 1.5s ease-in-out infinite; }
+      #rotate-hint p { color: #aaaacc; font-size: 18px; font-family: sans-serif; }
+      @keyframes rot {
+        0%, 100% { transform: rotate(0deg); }
+        50%       { transform: rotate(90deg); }
+      }
+      @media (orientation: landscape) and (max-height: 480px) {
+        #rotate-hint { display: flex; }
+        canvas        { display: none; }
+      }</style><script defer="defer" src="bundle.f540f87b746ef7defd8f.js"></script></head><body><div id="game-container"></div><div id="rotate-hint"><span>📱</span><p>请将设备旋转为竖屏</p></div></body></html>

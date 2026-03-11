@@ -1,0 +1,10 @@
+{
+  "name": "web-game-platform",
+  "private": true,
+  "scripts": {
+    "build": "npm run build --prefix block-puzzle && npm run build --prefix hungry-loong && npm run build --prefix brick-breaker && npm run build --prefix 2048",
+    "assemble": "node scripts/assemble.js",
+    "serve": "npm run assemble && npx serve deploy",
+    "build:serve": "npm run build && npm run serve"
+  }
+}

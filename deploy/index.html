@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>小游戏平台</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        background: #1a1a2e;
+        color: #ffffff;
+        font-family: sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px;
+      }
+      h1 { font-size: 2rem; color: #00f0f0; margin-bottom: 8px; }
+      p  { color: #8888aa; margin-bottom: 40px; font-size: 0.95rem; }
+      .games {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        justify-content: center;
+        width: 100%;
+        max-width: 800px;
+      }
+      .game-card {
+        background: #0d0d2a;
+        border: 1px solid #333366;
+        border-radius: 12px;
+        padding: 32px 28px;
+        width: 200px;
+        text-align: center;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.2s, transform 0.2s;
+      }
+      .game-card:hover {
+        border-color: #00f0f0;
+        transform: translateY(-4px);
+      }
+      .game-card .icon { font-size: 48px; margin-bottom: 12px; }
+      .game-card .name { font-size: 1.1rem; font-weight: bold; margin-bottom: 6px; }
+      .game-card .desc { font-size: 0.8rem; color: #6666aa; }
+      .badge {
+        display: inline-block;
+        background: #00f0f0;
+        color: #000;
+        font-size: 0.65rem;
+        font-weight: bold;
+        padding: 2px 6px;
+        border-radius: 4px;
+        margin-top: 8px;
+      }
+      .coming-soon { opacity: 0.4; cursor: default; }
+      .coming-soon:hover { transform: none; border-color: #333366; }
+    </style>
+  </head>
+  <body>
+    <h1>🎮 小游戏平台</h1>
+    <p>免费经典游戏，无需注册，打开即玩</p>
+
+    <div class="games">
+      <a href="block-puzzle/" class="game-card">
+        <div class="icon">🟦</div>
+        <div class="name">方块消除</div>
+        <div class="desc">经典消除游戏</div>
+        <div class="badge">可以玩</div>
+      </a>
+
+      <div class="game-card coming-soon">
+        <div class="icon">📦</div>
+        <div class="name">推箱子</div>
+        <div class="desc">益智解谜游戏</div>
+        <div class="badge" style="background:#555">敬请期待</div>
+      </div>
+
+      <a href="brick-breaker/" class="game-card">
+        <div class="icon">🧱</div>
+        <div class="name">敲砖英雄</div>
+        <div class="desc">经典弹球游戏</div>
+        <div class="badge" style="background:#aa4422">可以玩</div>
+      </a>
+
+      <a href="hungry-loong/" class="game-card">
+        <div class="icon">🐍</div>
+        <div class="name">贪吃的小龙</div>
+        <div class="desc">经典移动游戏</div>
+        <div class="badge" style="background:#22aa44">可以玩</div>
+      </a>
+
+      <a href="2048/" class="game-card">
+        <div class="icon">🔢</div>
+        <div class="name">2048 挑战</div>
+        <div class="desc">数字合并益智</div>
+        <div class="badge" style="background:#edc22e;color:#776e65">可以玩</div>
+      </a>
+    </div>
+  </body>
+</html>
