@@ -280,13 +280,17 @@ export class GameScene extends Phaser.Scene {
   private tryMove(dir: Direction): void {
     if (this.isAnimating || this.gameOver) return;
 
-    // Save undo state before move
-    this.undoSnapshot = this.grid.snapshot();
-    this.undoScore    = this.score;
-    this.undoWon      = this.won;
+    const preSnapshot = this.grid.snapshot();
+    const preScore    = this.score;
+    const preWon      = this.won;
 
     const result = this.grid.move(dir);
     if (!result.moved) return;  // 棋盘没变，忽略这次按键，保留上一步的撤销快照
+
+    // Only commit undo snapshot when the move actually changed the board
+    this.undoSnapshot = preSnapshot;
+    this.undoScore    = preScore;
+    this.undoWon      = preWon;
 
     this.setUndoEnabled(true);
     this.isAnimating = true;
