@@ -25,7 +25,7 @@ fs.mkdirSync(deploy);
 fs.copyFileSync(path.join(root, 'index.html'), path.join(deploy, 'index.html'));
 
 // 各游戏
-for (const game of ['block-puzzle', 'hungry-loong', 'brick-breaker', '2048']) {
+for (const game of ['block-puzzle', 'hungry-loong', 'brick-breaker', '2048', 'sokoban']) {
   const src = path.join(root, game, 'dist');
   const dst = path.join(deploy, game);
   if (fs.existsSync(src)) {

@@ -1,0 +1,21 @@
+{
+  "name": "sokoban",
+  "version": "1.0.0",
+  "description": "推箱工人 (Box Pusher) — 经典推箱子益智游戏，基于 Phaser 3 + TypeScript",
+  "scripts": {
+    "dev": "webpack serve --config webpack.config.js --env development",
+    "build": "webpack --config webpack.config.js --env production"
+  },
+  "dependencies": {
+    "phaser": "^3.88.2"
+  },
+  "devDependencies": {
+    "copy-webpack-plugin": "^12.0.2",
+    "html-webpack-plugin": "^5.6.3",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.8.2",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.0"
+  }
+}
