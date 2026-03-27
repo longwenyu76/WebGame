@@ -13,7 +13,7 @@ export const GRID_SIZE  = 4;     // 4×4
 export const TILE_SIZE  = 97;    // 每格像素大小
 export const TILE_GAP   = 12;    // 格间距（含外边框）
 export const GRID_X     = 16;    // 棋盘左边界 X
-export const GRID_Y     = 121;   // 棋盘顶边界 Y
+export const GRID_Y     = 215;   // 棋盘顶边界 Y
 // 棋盘总宽/高 = GAP + (TILE_SIZE + GAP) * 4 = 12 + 109*4 = 448
 export const BOARD_SIZE = TILE_GAP + (TILE_SIZE + TILE_GAP) * GRID_SIZE; // 448
 

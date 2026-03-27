@@ -6,88 +6,107 @@ import {
 import { LEVELS } from '../config/levels';
 import { StorageUtil } from '../utils/StorageUtil';
 
-const PER_PAGE = 20;   // 每页显示关卡数（5行×4列）
-const COLS     = 4;
-const CELL_W   = 100;
-const CELL_H   = 88;
+const COLS        = 4;
+const CELL_W      = 100;
+const CELL_H      = 90;
+const TOP_AREA    = 76;   // 标题占用的高度
+const BOTTOM_AREA = 100;  // 返回按钮占用的高度
+const GRID_TOP    = TOP_AREA;
 
 export class LevelSelectScene extends Phaser.Scene {
-  private page: number = 0;
-
   constructor() { super({ key: SCENE_KEYS.SELECT }); }
-
-  init(data: { page?: number }): void {
-    this.page = data.page ?? 0;
-  }
 
   create(): void {
     const cx        = CANVAS_WIDTH / 2;
-    const totalPages = Math.ceil(LEVELS.length / PER_PAGE);
+    const totalRows = Math.ceil(LEVELS.length / COLS);
+    const totalH    = GRID_TOP + totalRows * CELL_H + 20;
 
-    this.add.rectangle(cx, CANVAS_HEIGHT / 2, CANVAS_WIDTH, CANVAS_HEIGHT, COLOR_BG);
+    // 滚动到底时，内容底边停在 CANVAS_HEIGHT - BOTTOM_AREA 处
+    const maxScrollY = Math.max(0, totalH - (CANVAS_HEIGHT - BOTTOM_AREA));
 
-    // 标题
-    this.add.text(cx, 36, '选 择 关 卡', {
-      fontSize: '30px', color: '#f39c12', fontStyle: 'bold', fontFamily: FONT_FAMILY,
-    }).setOrigin(0.5);
+    // ── 世界背景 ─────────────────────────────────────────────────────────
+    this.add.rectangle(cx, totalH / 2, CANVAS_WIDTH, totalH, COLOR_BG);
 
-    // 页码
-    if (totalPages > 1) {
-      this.add.text(cx, 68, `第 ${this.page + 1} / ${totalPages} 页`, {
-        fontSize: '14px', color: '#7f8c8d', fontFamily: FONT_FAMILY,
-      }).setOrigin(0.5);
-    }
-
-    // 关卡格子
+    // ── 可滚动关卡格子 ────────────────────────────────────────────────────
     this.drawGrid();
 
-    // 底部导航区
-    const navY  = CANVAS_HEIGHT - 150;
-    const backY = CANVAS_HEIGHT - 72;
+    // ── 固定顶部遮罩 + 标题 ───────────────────────────────────────────────
+    this.add.rectangle(cx, TOP_AREA / 2, CANVAS_WIDTH, TOP_AREA, COLOR_BG)
+      .setScrollFactor(0).setDepth(10);
+    this.add.text(cx, TOP_AREA / 2, '选 择 关 卡', {
+      fontSize: '30px', color: '#f39c12', fontStyle: 'bold', fontFamily: FONT_FAMILY,
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(11);
 
-    // 上一页 / 下一页
-    if (totalPages > 1) {
-      if (this.page > 0) {
-        this.makeNavBtn(cx - 100, navY, '◀  上一页', () =>
-          this.scene.restart({ page: this.page - 1 }));
-      }
-      if (this.page < totalPages - 1) {
-        this.makeNavBtn(cx + 100, navY, '下一页  ▶', () =>
-          this.scene.restart({ page: this.page + 1 }));
-      }
-    }
+    // ── 固定底部遮罩 + 返回按钮 ───────────────────────────────────────────
+    const coverTop = CANVAS_HEIGHT - BOTTOM_AREA;
+    this.add.rectangle(cx, coverTop + BOTTOM_AREA / 2, CANVAS_WIDTH, BOTTOM_AREA, COLOR_BG)
+      .setScrollFactor(0).setDepth(10);
 
-    // 返回主菜单
-    this.add.rectangle(cx + 3, backY + 5, 200, 46, 0x0c0e16).setOrigin(0.5);
+    const backY = CANVAS_HEIGHT - BOTTOM_AREA / 2;
+    this.add.rectangle(cx + 3, backY + 5, 200, 46, 0x0c0e16)
+      .setOrigin(0.5).setScrollFactor(0).setDepth(11);
     const backBg = this.add.rectangle(cx, backY, 200, 46, 0x4a5568)
-      .setOrigin(0.5).setInteractive({ useHandCursor: true });
-    this.add.rectangle(cx, backY - 21, 192, 4, 0x7a9ab5).setOrigin(0.5, 0);
-    this.add.rectangle(cx, backY + 18, 192, 4, 0x1e2d3d).setOrigin(0.5, 0);
+      .setOrigin(0.5).setScrollFactor(0).setDepth(11)
+      .setInteractive({ useHandCursor: true });
+    this.add.rectangle(cx, backY - 21, 192, 4, 0x7a9ab5)
+      .setOrigin(0.5, 0).setScrollFactor(0).setDepth(11);
+    this.add.rectangle(cx, backY + 18, 192, 4, 0x1e2d3d)
+      .setOrigin(0.5, 0).setScrollFactor(0).setDepth(11);
     const backTxt = this.add.text(cx, backY, '← 返回主菜单', {
       fontSize: '18px', color: '#f9f6f2', fontFamily: FONT_FAMILY,
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    }).setOrigin(0.5).setScrollFactor(0).setDepth(11)
+      .setInteractive({ useHandCursor: true });
+
     const back = () => this.scene.start(SCENE_KEYS.MENU);
     backBg.on('pointerdown', back);
     backTxt.on('pointerdown', back);
+    backBg.on('pointerover', () => backBg.setFillStyle(0x718096));
+    backBg.on('pointerout',  () => backBg.setFillStyle(0x4a5568));
+
+    // 不用 setBounds —— 它会把 scrollY 限制在 totalH-CANVAS_HEIGHT，
+    // 比考虑底部保留区的 maxScrollY 小，导致最后一行被遮罩挡住。
+    // 直接由下方的 Clamp 手动控制范围。
+
+    // ── 触摸拖拽滚动 ──────────────────────────────────────────────────────
+    let dragStartY       = 0;
+    let dragStartScrollY = 0;
+    let isDragging       = false;
+
+    this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      dragStartY       = p.y;
+      dragStartScrollY = this.cameras.main.scrollY;
+      isDragging       = true;
+    });
+    this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (!isDragging || !p.isDown) return;
+      this.cameras.main.scrollY = Phaser.Math.Clamp(
+        dragStartScrollY + (dragStartY - p.y), 0, maxScrollY,
+      );
+    });
+    this.input.on('pointerup', () => { isDragging = false; });
+
+    // ── 鼠标滚轮 ─────────────────────────────────────────────────────────
+    this.input.on('wheel',
+      (_p: Phaser.Input.Pointer, _go: unknown, _dx: number, dy: number) => {
+        this.cameras.main.scrollY = Phaser.Math.Clamp(
+          this.cameras.main.scrollY + dy, 0, maxScrollY,
+        );
+      },
+    );
   }
 
   private drawGrid(): void {
-    const startIdx = this.page * PER_PAGE;
-    const endIdx   = Math.min(startIdx + PER_PAGE, LEVELS.length);
+    const padX = (CANVAS_WIDTH - COLS * CELL_W) / 2 + CELL_W / 2;
 
-    const padX   = (CANVAS_WIDTH - COLS * CELL_W) / 2 + CELL_W / 2;
-    const startY = 130;
-
-    for (let i = startIdx; i < endIdx; i++) {
-      const localIdx = i - startIdx;
-      const col = localIdx % COLS;
-      const row = Math.floor(localIdx / COLS);
+    for (let i = 0; i < LEVELS.length; i++) {
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
       const x   = padX + col * CELL_W;
-      const y   = startY + row * CELL_H;
+      const y   = GRID_TOP + row * CELL_H + CELL_H / 2;
       const rec = StorageUtil.getRecord(i);
 
       const bgColor = rec.completed ? 0x1e6b3a : 0x2d3748;
-      const bg = this.add.rectangle(x, y, CELL_W - 12, CELL_H - 10, bgColor, 1)
+      const bg = this.add.rectangle(x, y, CELL_W - 12, CELL_H - 10, bgColor)
         .setOrigin(0.5).setInteractive({ useHandCursor: true });
 
       this.add.text(x, y - 22, String(i + 1), {
@@ -97,11 +116,11 @@ export class LevelSelectScene extends Phaser.Scene {
       if (rec.completed) {
         const stars = '★'.repeat(rec.stars) + '☆'.repeat(3 - rec.stars);
         this.add.text(x, y + 2, stars, {
-          fontSize: '13px', color: '#f39c12', fontFamily: FONT_FAMILY,
+          fontSize: '14px', color: '#f39c12', fontFamily: FONT_FAMILY,
         }).setOrigin(0.5);
         if (rec.bestMoves > 0) {
           this.add.text(x, y + 20, `${rec.bestMoves}步`, {
-            fontSize: '11px', color: '#bdc3c7', fontFamily: FONT_FAMILY,
+            fontSize: '14px', color: '#bdc3c7', fontFamily: FONT_FAMILY,
           }).setOrigin(0.5);
         }
       }
@@ -112,20 +131,5 @@ export class LevelSelectScene extends Phaser.Scene {
       bg.on('pointerover', over).on('pointerout', out)
         .on('pointerdown', () => this.scene.start(SCENE_KEYS.GAME, { levelIndex: idx }));
     }
-  }
-
-  private makeNavBtn(x: number, y: number, label: string, fn: () => void): void {
-    this.add.rectangle(x + 3, y + 5, 160, 42, 0x0c0e16).setOrigin(0.5);
-    const bg = this.add.rectangle(x, y, 160, 42, 0x4a5568)
-      .setOrigin(0.5).setInteractive({ useHandCursor: true });
-    this.add.rectangle(x, y - 19, 152, 3, 0x7a9ab5).setOrigin(0.5, 0);
-    this.add.rectangle(x, y + 16, 152, 3, 0x1e2d3d).setOrigin(0.5, 0);
-    const txt = this.add.text(x, y, label, {
-      fontSize: '16px', color: '#f9f6f2', fontFamily: FONT_FAMILY,
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    bg.on('pointerdown', fn);
-    txt.on('pointerdown', fn);
-    bg.on('pointerover', () => bg.setFillStyle(0x718096));
-    bg.on('pointerout',  () => bg.setFillStyle(0x4a5568));
   }
 }

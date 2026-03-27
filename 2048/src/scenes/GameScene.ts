@@ -95,11 +95,8 @@ export class GameScene extends Phaser.Scene {
     const cx = CANVAS_WIDTH / 2;
 
     // Title
-    this.add.text(16, 12, '2048 挑战', {
+    this.add.text(16, 16, '2048 挑战', {
       fontSize: '38px', color: '#776e65', fontStyle: 'bold', fontFamily: FONT_FAMILY,
-    });
-    this.add.text(16, 58, '2048 Challenge', {
-      fontSize: '16px', color: '#bbada0', fontFamily: FONT_FAMILY,
     });
 
     // Score box
@@ -122,17 +119,18 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createButtons(): void {
-    const btY = GRID_Y + BOARD_SIZE + 28;
+    const row1Y = 112;  // 新游戏 + 撤销
+    const row2Y = 168;  // 保存并退出
 
     // New Game
-    this.makeButton(CANVAS_WIDTH / 2 - 90, btY, '新 游 戏', 0x8f7a66, () => {
+    this.makeButton(CANVAS_WIDTH / 2 - 90, row1Y, '新 游 戏', 0x8f7a66, () => {
       if (this.isAnimating) return;
       this.clearOverlay();
       this.startNewGame();
     });
 
     // Undo
-    const undoBtn = this.makeButton(CANVAS_WIDTH / 2 + 90, btY, '  撤 销  ', 0x8f7a66, () => {
+    const undoBtn = this.makeButton(CANVAS_WIDTH / 2 + 90, row1Y, '  撤 销  ', 0x8f7a66, () => {
       if (this.isAnimating || this.gameOver) return;
       this.doUndo();
     });
@@ -141,7 +139,7 @@ export class GameScene extends Phaser.Scene {
     this.setUndoEnabled(false);  // disabled until first move
 
     // Save & return to platform
-    this.makeButton(CANVAS_WIDTH / 2, btY + 66, '保存并退出', 0x776e65, () => {
+    this.makeButton(CANVAS_WIDTH / 2, row2Y, '保存并退出', 0x776e65, () => {
       this.autoSave();
       this.showSaveAndExit();
     });
