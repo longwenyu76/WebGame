@@ -5,6 +5,7 @@ import { MenuScene }        from './scenes/MenuScene';
 import { LevelSelectScene } from './scenes/LevelSelectScene';
 import { GameScene }        from './scenes/GameScene';
 import { SettingsScene }    from './scenes/SettingsScene';
+import { HelpScene }        from './scenes/HelpScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -12,7 +13,7 @@ const config: Phaser.Types.Core.GameConfig = {
   height: CANVAS_HEIGHT,
   parent: 'game-container',
   backgroundColor: '#1a1a2e',
-  scene: [BootScene, MenuScene, LevelSelectScene, GameScene, SettingsScene],
+  scene: [BootScene, MenuScene, LevelSelectScene, GameScene, SettingsScene, HelpScene],
   scale: {
     mode:       Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.NO_CENTER,

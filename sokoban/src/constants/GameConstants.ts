@@ -43,4 +43,5 @@ export const SCENE_KEYS = {
   SELECT:   'Select',
   GAME:     'Game',
   SETTINGS: 'Settings',
+  HELP:     'Help',
 } as const;

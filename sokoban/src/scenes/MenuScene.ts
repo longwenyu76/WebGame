@@ -43,7 +43,7 @@ export class MenuScene extends Phaser.Scene {
       },
       () => this.scene.start(SCENE_KEYS.SELECT),
       () => this.scene.start(SCENE_KEYS.SETTINGS),
-      () => this.showHelp(),
+      () => this.scene.start(SCENE_KEYS.HELP),
     ];
 
     btns.forEach((label, i) => {
@@ -107,57 +107,4 @@ export class MenuScene extends Phaser.Scene {
     txt.on('pointerover', over).on('pointerout', out).on('pointerdown', onClick);
   }
 
-  private showHelp(): void {
-    const cx = CANVAS_WIDTH / 2;
-    const cy = CANVAS_HEIGHT / 2;
-    const items: Phaser.GameObjects.GameObject[] = [];
-
-    items.push(this.add.rectangle(cx, cy, CANVAS_WIDTH - 40, CANVAS_HEIGHT - 80, 0x0d0d2a, 0.97)
-      .setOrigin(0.5).setInteractive());
-
-    const lines = [
-      ['游戏目标', ''],
-      ['将所有箱子推到绿色目标点上', ''],
-      ['', ''],
-      ['操作方法', ''],
-      ['PC：方向键 / WASD 移动', ''],
-      ['手机：虚拟方向键 或 滑动屏幕', ''],
-      ['', ''],
-      ['游戏规则', ''],
-      ['· 只能推箱子，不能拉', ''],
-      ['· 一次只能推一个箱子', ''],
-      ['· 箱子前方是墙或箱子时无法推动', ''],
-      ['· Z / U 撤销按钮 可以反悔', ''],
-      ['', ''],
-      ['快捷键', ''],
-      ['Z / U = 撤销    R = 重开关卡', ''],
-      ['N = 下一关（测试用）', ''],
-    ];
-
-    let textY = cy - 280;
-    lines.forEach(([text]) => {
-      const isTitle = text !== '' && !text.startsWith('·') && !text.startsWith('Z') &&
-                      !text.startsWith('PC') && !text.startsWith('手机') &&
-                      !text.startsWith('将');
-      items.push(this.add.text(cx, textY, text, {
-        fontSize: isTitle && text !== '' ? '20px' : '16px',
-        color: isTitle ? '#f39c12' : '#ecf0f1',
-        fontFamily: FONT_FAMILY,
-      }).setOrigin(0.5));
-      textY += isTitle ? 32 : 24;
-    });
-
-    // 关闭按钮
-    const closeBg = this.add.rectangle(cx, cy + 320, 160, 46, 0x8f7a66)
-      .setOrigin(0.5).setInteractive({ useHandCursor: true });
-    const closeTxt = this.add.text(cx, cy + 320, '关 闭', {
-      fontSize: '20px', color: '#f9f6f2', fontFamily: FONT_FAMILY,
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-    items.push(closeBg, closeTxt);
-
-    const panel = this.add.container(0, 0, items).setDepth(50);
-    const close = () => panel.destroy();
-    closeBg.on('pointerdown', close);
-    closeTxt.on('pointerdown', close);
-  }
 }
