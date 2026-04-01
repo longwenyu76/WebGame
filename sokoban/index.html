@@ -43,5 +43,8 @@
   </head>
   <body>
     <div id="game-container"></div>
+    <!-- Force browser to treat Sansation as required, so document.fonts.ready waits for it -->
+    <div style="position:absolute;width:0;height:0;overflow:hidden;visibility:hidden;font-family:'Sansation';font-weight:normal;">.</div>
+    <div style="position:absolute;width:0;height:0;overflow:hidden;visibility:hidden;font-family:'Sansation';font-weight:bold;">.</div>
   </body>
 </html>
