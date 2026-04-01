@@ -1,7 +1,7 @@
 export const CANVAS_WIDTH  = 480;
 export const CANVAS_HEIGHT = 800;
 
-export const FONT_FAMILY = "'Ma Shan Zheng', 'Microsoft YaHei', sans-serif";
+export const FONT_FAMILY = "'Sansation', 'Ma Shan Zheng', 'Microsoft YaHei', sans-serif";
 
 // 颜色
 export const COLOR_BG         = 0x1a1a2e;

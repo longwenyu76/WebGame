@@ -23,6 +23,10 @@ const config: Phaser.Types.Core.GameConfig = {
   render: { antialias: true, roundPixels: true },
 };
 
-document.fonts.ready.then(() => {
+Promise.all([
+  document.fonts.ready,
+  document.fonts.load('normal 16px "Sansation"'),
+  document.fonts.load('bold 16px "Sansation"'),
+]).then(() => {
   new Phaser.Game(config);
 });
