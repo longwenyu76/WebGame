@@ -12,11 +12,16 @@ const CELL_H      = 90;
 const TOP_AREA    = 76;   // 标题占用的高度
 const BOTTOM_AREA = 100;  // 返回按钮占用的高度
 const GRID_TOP    = TOP_AREA;
+const TAP_THRESHOLD = 10; // 超过此像素视为滑动，不触发点击
 
 export class LevelSelectScene extends Phaser.Scene {
+  private hasDragged = false;
+
   constructor() { super({ key: SCENE_KEYS.SELECT }); }
 
   create(): void {
+    this.hasDragged = false;
+
     const cx        = CANVAS_WIDTH / 2;
     const totalRows = Math.ceil(LEVELS.length / COLS);
     const totalH    = GRID_TOP + totalRows * CELL_H + 20;
@@ -57,15 +62,11 @@ export class LevelSelectScene extends Phaser.Scene {
     }).setOrigin(0.5).setScrollFactor(0).setDepth(11)
       .setInteractive({ useHandCursor: true });
 
-    const back = () => this.scene.start(SCENE_KEYS.MENU);
-    backBg.on('pointerdown', back);
-    backTxt.on('pointerdown', back);
+    const back = () => { if (!this.hasDragged) this.scene.start(SCENE_KEYS.MENU); };
+    backBg.on('pointerup', back);
+    backTxt.on('pointerup', back);
     backBg.on('pointerover', () => backBg.setFillStyle(0x718096));
     backBg.on('pointerout',  () => backBg.setFillStyle(0x4a5568));
-
-    // 不用 setBounds —— 它会把 scrollY 限制在 totalH-CANVAS_HEIGHT，
-    // 比考虑底部保留区的 maxScrollY 小，导致最后一行被遮罩挡住。
-    // 直接由下方的 Clamp 手动控制范围。
 
     // ── 触摸拖拽滚动 ──────────────────────────────────────────────────────
     let dragStartY       = 0;
@@ -76,9 +77,11 @@ export class LevelSelectScene extends Phaser.Scene {
       dragStartY       = p.y;
       dragStartScrollY = this.cameras.main.scrollY;
       isDragging       = true;
+      this.hasDragged  = false;
     });
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!isDragging || !p.isDown) return;
+      if (Math.abs(p.y - dragStartY) > TAP_THRESHOLD) this.hasDragged = true;
       this.cameras.main.scrollY = Phaser.Math.Clamp(
         dragStartScrollY + (dragStartY - p.y), 0, maxScrollY,
       );
@@ -129,7 +132,9 @@ export class LevelSelectScene extends Phaser.Scene {
       const out  = () => bg.setFillStyle(bgColor);
       const idx  = i;
       bg.on('pointerover', over).on('pointerout', out)
-        .on('pointerdown', () => this.scene.start(SCENE_KEYS.GAME, { levelIndex: idx }));
+        .on('pointerup', () => {
+          if (!this.hasDragged) this.scene.start(SCENE_KEYS.GAME, { levelIndex: idx });
+        });
     }
   }
 }
