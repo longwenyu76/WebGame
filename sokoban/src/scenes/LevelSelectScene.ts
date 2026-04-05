@@ -15,12 +15,14 @@ const GRID_TOP    = TOP_AREA;
 const TAP_THRESHOLD = 10; // 超过此像素视为滑动，不触发点击
 
 export class LevelSelectScene extends Phaser.Scene {
-  private hasDragged = false;
+  private hasDragged    = false;
+  private hadPointerDown = false;
 
   constructor() { super({ key: SCENE_KEYS.SELECT }); }
 
   create(): void {
-    this.hasDragged = false;
+    this.hasDragged     = false;
+    this.hadPointerDown = false;
 
     const cx        = CANVAS_WIDTH / 2;
     const totalRows = Math.ceil(LEVELS.length / COLS);
@@ -62,7 +64,7 @@ export class LevelSelectScene extends Phaser.Scene {
     }).setOrigin(0.5).setScrollFactor(0).setDepth(11)
       .setInteractive({ useHandCursor: true });
 
-    const back = () => { if (!this.hasDragged) this.scene.start(SCENE_KEYS.MENU); };
+    const back = () => { if (this.hadPointerDown && !this.hasDragged) this.scene.start(SCENE_KEYS.MENU); };
     backBg.on('pointerup', back);
     backTxt.on('pointerup', back);
     backBg.on('pointerover', () => backBg.setFillStyle(0x718096));
@@ -74,10 +76,11 @@ export class LevelSelectScene extends Phaser.Scene {
     let isDragging       = false;
 
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
-      dragStartY       = p.y;
-      dragStartScrollY = this.cameras.main.scrollY;
-      isDragging       = true;
-      this.hasDragged  = false;
+      dragStartY          = p.y;
+      dragStartScrollY    = this.cameras.main.scrollY;
+      isDragging          = true;
+      this.hasDragged     = false;
+      this.hadPointerDown = true;
     });
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       if (!isDragging || !p.isDown) return;
@@ -133,7 +136,7 @@ export class LevelSelectScene extends Phaser.Scene {
       const idx  = i;
       bg.on('pointerover', over).on('pointerout', out)
         .on('pointerup', () => {
-          if (!this.hasDragged) this.scene.start(SCENE_KEYS.GAME, { levelIndex: idx });
+          if (this.hadPointerDown && !this.hasDragged) this.scene.start(SCENE_KEYS.GAME, { levelIndex: idx });
         });
     }
   }

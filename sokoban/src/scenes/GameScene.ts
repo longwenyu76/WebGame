@@ -163,6 +163,7 @@ export class GameScene extends Phaser.Scene {
     this.createMobileObjects();
     this.updateHUD();
     this.clearOverlay();
+    this.audio?.startBGM();
   }
 
   // ── 背景绘制（墙/地板/目标）─────────────────────────────────────────────
