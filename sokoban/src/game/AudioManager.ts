@@ -125,6 +125,8 @@ export class AudioManager {
       gain.connect(this.bgmGain);
       osc.start(t);
       osc.stop(t + dur + 0.01);
+      // 播完后断开节点，防止 iOS 上 AudioNode 堆积触发 GC 卡顿
+      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     } catch { /* ignore */ }
   }
 
@@ -209,6 +211,14 @@ export class AudioManager {
   }
 
   setSfxEnabled(enabled: boolean): void { this.sfxEnabled = enabled; }
+
+  destroy(): void {
+    this.stopBGM();
+    void this.ctx?.close();
+    this.ctx     = null;
+    this.bgmGain = null;
+    this.sfxGain = null;
+  }
 
   applySettings(): void {
     const s = SettingsManager.get();

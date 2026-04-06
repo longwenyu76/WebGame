@@ -38,6 +38,7 @@ export class GameScene extends Phaser.Scene {
   private isAnimating:  boolean = false;
   private elapsedSec:   number = 0;
   private gameStarted:  boolean = false;
+  private pendingMove:  [number, number] | null = null;
 
   // ── 渲染参数 ────────────────────────────────────────────────────────────
   private tileSize:  number = 48;
@@ -85,6 +86,7 @@ export class GameScene extends Phaser.Scene {
     this.overlay     = null;
     this.boxObjs     = [];
     this.inputReady  = false;
+    this.pendingMove = null;
   }
 
   create(): void {
@@ -98,8 +100,8 @@ export class GameScene extends Phaser.Scene {
 
     this.audio.startBGM();
 
-    // 场景关闭时停止 BGM
-    this.events.on('shutdown', () => { this.audio.stopBGM(); });
+    // 场景关闭时停止 BGM 并释放 AudioContext
+    this.events.on('shutdown', () => { this.audio.destroy(); });
 
     // inputReady 由 update() 中检测到指针抬起后才设为 true，防止场景切换时穿透
   }
@@ -251,7 +253,13 @@ export class GameScene extends Phaser.Scene {
   // ── 移动逻辑 ─────────────────────────────────────────────────────────────
 
   private tryMove(dr: number, dc: number): void {
-    if (!this.inputReady || this.isAnimating) return;
+    if (!this.inputReady) return;
+    if (this.isAnimating) {
+      // 缓冲最新的一步，动画结束后执行
+      this.pendingMove = [dr, dc];
+      return;
+    }
+    this.pendingMove = null;
     this.gameStarted = true;
 
     const oldPR = this.logic.pRow;
@@ -315,7 +323,13 @@ export class GameScene extends Phaser.Scene {
       onComplete: () => {
         this.isAnimating = false;
         this.updateHUD();
-        if (result.won) this.onWin();
+        if (result.won) {
+          this.onWin();
+        } else if (this.pendingMove) {
+          const [pdr, pdc] = this.pendingMove;
+          this.pendingMove = null;
+          this.tryMove(pdr, pdc);
+        }
       },
     });
   }
@@ -324,6 +338,7 @@ export class GameScene extends Phaser.Scene {
 
   private doUndo(): void {
     if (!this.logic.canUndo() || this.isAnimating) return;
+    this.pendingMove = null;
     this.audio.playUndo();
     this.logic.undo();
     this.destroyGameObjects();
@@ -335,6 +350,7 @@ export class GameScene extends Phaser.Scene {
   // ── 重开 / 下一关 ─────────────────────────────────────────────────────────
 
   private doReset(): void {
+    this.pendingMove = null;
     this.clearOverlay();
     this.loadLevel(this.levelIndex);
   }
