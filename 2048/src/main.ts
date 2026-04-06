@@ -19,7 +19,10 @@ const config: Phaser.Types.Core.GameConfig = {
   render: { antialias: true, roundPixels: true },
 };
 
-// 等字体加载完再启动，确保 Ma Shan Zheng 可用
-document.fonts.ready.then(() => {
+Promise.all([
+  document.fonts.ready,
+  document.fonts.load('normal 16px "Sansation"'),
+  document.fonts.load('bold 16px "Sansation"'),
+]).then(() => {
   new Phaser.Game(config);
 });

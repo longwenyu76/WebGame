@@ -4,9 +4,9 @@ export const CANVAS_HEIGHT = 780;
 
 // ── 字体 ─────────────────────────────────────────────────────────────────────
 // 用于汉字标题、按钮等 UI 文字
-export const FONT_FAMILY = '"Ma Shan Zheng", KaiTi, 楷体, STKaiti, "Microsoft YaHei", sans-serif';
-// 用于方块内的数字——清晰粗体无衬线，与标题里 "2048" 数字风格一致
-export const TILE_FONT_FAMILY = '"Clear Sans", "Helvetica Neue", Arial, "Microsoft YaHei", sans-serif';
+export const FONT_FAMILY = "'Sansation', 'Ma Shan Zheng', 'Microsoft YaHei', sans-serif";
+// 用于方块内的数字——Sansation 粗体，视觉风格与 UI 一致
+export const TILE_FONT_FAMILY = "'Sansation', 'Ma Shan Zheng', 'Microsoft YaHei', sans-serif";
 
 // ── 棋盘布局 ──────────────────────────────────────────────────────────────────
 export const GRID_SIZE  = 4;     // 4×4
