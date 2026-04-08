@@ -29,14 +29,20 @@ const BGM_MELODY: [number, number][] = [
   [R,  q],
 ];
 
+// 旋律总时长（秒）
+const BGM_DURATION = BGM_MELODY.reduce((s, [, d]) => s + d, 0);
+
 // ── AudioManager ──────────────────────────────────────────────────────────────
 export class AudioManager {
   private ctx:     AudioContext | null = null;
   private bgmGain: GainNode    | null = null;
   private sfxGain: GainNode    | null = null;
 
-  private bgmTimers:  number[]  = [];
-  private bgmRunning: boolean   = false;
+  // 只保留一个循环重启的 timer
+  private bgmLoopTimer: number = 0;
+  private bgmRunning:   boolean = false;
+  // 记录本轮所有已排期的 oscillator，供 stopBGM 立即停止
+  private bgmOscillators: OscillatorNode[] = [];
 
   private musicVolume:  number;
   private sfxVolume:    number;
@@ -56,7 +62,7 @@ export class AudioManager {
           if (this.bgmRunning && this.musicEnabled) {
             this.stopBGM();
             this.bgmRunning = true;
-            this.runBGMLoop();
+            this.scheduleBGMLoop();
           }
         });
       }
@@ -102,18 +108,40 @@ export class AudioManager {
       g.gain.setValueAtTime(gain, t0);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
       osc.start(t0); osc.stop(t0 + duration + 0.01);
+      osc.onended = () => { osc.disconnect(); g.disconnect(); };
     } catch { /* 被浏览器策略阻止时静默忽略 */ }
   }
 
-  // ── BGM ────────────────────────────────────────────────────────────────────
+  // ── BGM：用 AudioContext 时钟一次性预排全部音符 ────────────────────────────
+  // 不使用 per-note setTimeout，避免 iOS 上批量回调阻塞主线程
 
-  private scheduleBGMNote(freq: number, duration: number): void {
+  private scheduleBGMLoop(): void {
+    if (!this.bgmRunning) return;
     const ctx = this.getCtx();
     if (!ctx || !this.bgmGain) return;
+
+    const startTime = ctx.currentTime + 0.05; // 留 50ms 缓冲，确保不落在过去
+    let offset = 0;
+
+    for (const [freq, dur] of BGM_MELODY) {
+      if (freq > 0) {
+        this.scheduleNote(ctx, startTime + offset, freq, dur);
+      }
+      offset += dur;
+    }
+
+    // 只用一个 setTimeout 触发下一轮循环
+    this.bgmLoopTimer = window.setTimeout(
+      () => { this.scheduleBGMLoop(); },
+      BGM_DURATION * 1000,
+    );
+  }
+
+  private scheduleNote(ctx: AudioContext, t: number, freq: number, duration: number): void {
+    if (!this.bgmGain) return;
     try {
       const osc  = ctx.createOscillator();
       const gain = ctx.createGain();
-      const t    = ctx.currentTime;
       const dur  = duration * 0.80;
 
       osc.type = 'sine';
@@ -125,40 +153,30 @@ export class AudioManager {
       gain.connect(this.bgmGain);
       osc.start(t);
       osc.stop(t + dur + 0.01);
-      // 播完后断开节点，防止 iOS 上 AudioNode 堆积触发 GC 卡顿
-      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+
+      this.bgmOscillators.push(osc);
+      osc.onended = () => {
+        osc.disconnect();
+        gain.disconnect();
+        const idx = this.bgmOscillators.indexOf(osc);
+        if (idx >= 0) this.bgmOscillators.splice(idx, 1);
+      };
     } catch { /* ignore */ }
-  }
-
-  private runBGMLoop(): void {
-    if (!this.bgmRunning) return;
-    this.bgmTimers = [];
-
-    let offset = 0;
-    for (const [freq, dur] of BGM_MELODY) {
-      if (freq > 0) {
-        const id = window.setTimeout(() => {
-          if (this.bgmRunning && this.musicEnabled) this.scheduleBGMNote(freq, dur);
-        }, offset * 1000);
-        this.bgmTimers.push(id);
-      }
-      offset += dur;
-    }
-
-    const loopId = window.setTimeout(() => { this.runBGMLoop(); }, offset * 1000);
-    this.bgmTimers.push(loopId);
   }
 
   startBGM(): void {
     if (!this.musicEnabled || this.bgmRunning) return;
     this.bgmRunning = true;
-    this.runBGMLoop();
+    this.scheduleBGMLoop();
   }
 
   stopBGM(): void {
     this.bgmRunning = false;
-    this.bgmTimers.forEach(id => window.clearTimeout(id));
-    this.bgmTimers = [];
+    window.clearTimeout(this.bgmLoopTimer);
+    this.bgmLoopTimer = 0;
+    // 立即停止所有已排期的音符
+    this.bgmOscillators.forEach(osc => { try { osc.stop(); } catch { /* already stopped */ } });
+    this.bgmOscillators = [];
   }
 
   // ── SFX 接口 ───────────────────────────────────────────────────────────────
@@ -212,14 +230,6 @@ export class AudioManager {
 
   setSfxEnabled(enabled: boolean): void { this.sfxEnabled = enabled; }
 
-  destroy(): void {
-    this.stopBGM();
-    void this.ctx?.close();
-    this.ctx     = null;
-    this.bgmGain = null;
-    this.sfxGain = null;
-  }
-
   applySettings(): void {
     const s = SettingsManager.get();
     this.setMusicVolume(s.musicVolume);
@@ -231,5 +241,13 @@ export class AudioManager {
       this.musicEnabled = true;
       this.startBGM();
     }
+  }
+
+  destroy(): void {
+    this.stopBGM();
+    void this.ctx?.close();
+    this.ctx     = null;
+    this.bgmGain = null;
+    this.sfxGain = null;
   }
 }
