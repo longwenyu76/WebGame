@@ -73,6 +73,7 @@ export class GameScene extends Phaser.Scene {
   private keyN!:     Phaser.Input.Keyboard.Key;
   private swipeStart:  { x: number; y: number } | null = null;
   private inputReady:  boolean = false;   // 防止场景切换时指针事件穿透
+  private pendingMove: { dr: number; dc: number } | null = null; // 动画期间缓冲的下一步
 
   constructor() { super({ key: SCENE_KEYS.GAME }); }
 
@@ -87,6 +88,7 @@ export class GameScene extends Phaser.Scene {
     this.overlay     = null;
     this.boxObjs     = [];
     this.inputReady  = false;
+    this.pendingMove = null;
   }
 
   create(): void {
@@ -125,7 +127,7 @@ export class GameScene extends Phaser.Scene {
       this.txtTimer.setText(this.formatTime(this.elapsedSec));
     }
 
-    if (this.isAnimating || this.overlay) return;
+    if (this.isAnimating || this.overlay) return;  // 键盘也缓冲一步
 
     const JD = Phaser.Input.Keyboard.JustDown;
     if (JD(this.keyR)) { this.doReset(); return; }
@@ -145,6 +147,7 @@ export class GameScene extends Phaser.Scene {
     this.levelIndex = Phaser.Math.Clamp(idx, 0, set.levels.length - 1);
     this.logic = new GameLogic(set.levels[this.levelIndex]);
     this.isAnimating = false;
+    this.pendingMove = null;
     this.elapsedSec  = 0;
     this.gameStarted = false;
 
@@ -255,7 +258,18 @@ export class GameScene extends Phaser.Scene {
   // ── 移动逻辑 ─────────────────────────────────────────────────────────────
 
   private tryMove(dr: number, dc: number): void {
-    if (!this.inputReady || this.isAnimating) return;
+    if (!this.inputReady) return;
+    if (this.isAnimating) {
+      // 动画进行中：缓冲最新输入，动画结束后立刻执行
+      this.pendingMove = { dr, dc };
+      return;
+    }
+    if (this.overlay) return;
+    this.executeMove(dr, dc);
+  }
+
+  private executeMove(dr: number, dc: number): void {
+    this.pendingMove = null;
     this.gameStarted = true;
 
     const oldPR = this.logic.pRow;
@@ -272,7 +286,15 @@ export class GameScene extends Phaser.Scene {
     }
 
     const result = this.logic.move(dr, dc);
-    if (!result.moved) return;
+    if (!result.moved) {
+      // 此方向走不通，尝试执行后续缓冲（如果有）
+      if (this.pendingMove) {
+        const { dr: ndr, dc: ndc } = this.pendingMove;
+        this.pendingMove = null;
+        this.executeMove(ndr, ndc);
+      }
+      return;
+    }
 
     this.isAnimating = true;
 
@@ -300,7 +322,7 @@ export class GameScene extends Phaser.Scene {
       });
     }
 
-    // 立刻播放音效（不等动画）
+    // 播放音效（与动画同步，不提前）
     if (result.pushed) {
       const landedOnTarget = this.logic.getCell(
         this.logic.pRow + dr, this.logic.pCol + dc
@@ -319,7 +341,15 @@ export class GameScene extends Phaser.Scene {
       onComplete: () => {
         this.isAnimating = false;
         this.updateHUD();
-        if (result.won) this.onWin();
+        if (result.won) {
+          this.pendingMove = null;
+          this.onWin();
+        } else if (this.pendingMove) {
+          // 动画刚结束，立刻执行缓冲的下一步
+          const { dr: ndr, dc: ndc } = this.pendingMove;
+          this.pendingMove = null;
+          this.executeMove(ndr, ndc);
+        }
       },
     });
   }
@@ -515,11 +545,11 @@ export class GameScene extends Phaser.Scene {
       this.add.text(bx, by, label, {
         fontSize: '26px', color: '#ecf0f1', fontFamily: FONT_FAMILY,
       }).setOrigin(0.5).setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => { if (!this.isAnimating && !this.overlay) this.tryMove(dr, dc); });
+        .on('pointerdown', () => this.tryMove(dr, dc));
 
       this.add.rectangle(bx, by - dw / 2 + 1, dw - 4, 3, 0x7a9ab5).setOrigin(0.5, 0);
       this.add.rectangle(bx, by + dw / 2 - 4, dw - 4, 3, 0x1e2d3d).setOrigin(0.5, 0);
-      bg.on('pointerdown', () => { if (!this.isAnimating && !this.overlay) this.tryMove(dr, dc); });
+      bg.on('pointerdown', () => this.tryMove(dr, dc));
       bg.on('pointerover', () => bg.setFillStyle(COLOR_BTN_HOVER));
       bg.on('pointerout',  () => bg.setFillStyle(COLOR_BTN));
     });
