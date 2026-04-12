@@ -38,10 +38,11 @@ export const GAME_AREA_TOP   = HUD_HEIGHT;
 export const GAME_AREA_H     = CANVAS_HEIGHT - HUD_HEIGHT - CTRL_HEIGHT;  // 526
 
 export const SCENE_KEYS = {
-  BOOT:     'Boot',
-  MENU:     'Menu',
-  SELECT:   'Select',
-  GAME:     'Game',
-  SETTINGS: 'Settings',
-  HELP:     'Help',
+  BOOT:       'Boot',
+  MENU:       'Menu',
+  SET_SELECT: 'SetSelect',
+  SELECT:     'Select',
+  GAME:       'Game',
+  SETTINGS:   'Settings',
+  HELP:       'Help',
 } as const;

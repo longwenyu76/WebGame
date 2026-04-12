@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from './constants/GameConstants';
 import { BootScene }        from './scenes/BootScene';
 import { MenuScene }        from './scenes/MenuScene';
+import { SetSelectScene }   from './scenes/SetSelectScene';
 import { LevelSelectScene } from './scenes/LevelSelectScene';
 import { GameScene }        from './scenes/GameScene';
 import { SettingsScene }    from './scenes/SettingsScene';
@@ -13,7 +14,7 @@ const config: Phaser.Types.Core.GameConfig = {
   height: CANVAS_HEIGHT,
   parent: 'game-container',
   backgroundColor: '#1a1a2e',
-  scene: [BootScene, MenuScene, LevelSelectScene, GameScene, SettingsScene, HelpScene],
+  scene: [BootScene, MenuScene, SetSelectScene, LevelSelectScene, GameScene, SettingsScene, HelpScene],
   scale: {
     mode:       Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.NO_CENTER,

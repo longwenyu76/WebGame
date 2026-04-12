@@ -5,6 +5,7 @@ import {
   SCENE_KEYS,
 } from '../constants/GameConstants';
 import { StorageUtil } from '../utils/StorageUtil';
+import { LEVEL_SETS } from '../config/levelSets';
 
 export class MenuScene extends Phaser.Scene {
   constructor() { super({ key: SCENE_KEYS.MENU }); }
@@ -38,10 +39,12 @@ export class MenuScene extends Phaser.Scene {
     const btns = ['开 始 游 戏', '选 择 关 卡', '音 量 设 置', '游 戏 说 明'];
     const actions = [
       () => {
-        const last = StorageUtil.getLastLevel();
-        this.scene.start(SCENE_KEYS.GAME, { levelIndex: last });
+        const setIndex = StorageUtil.getLastSetIndex();
+        const set = LEVEL_SETS[setIndex];
+        const last = StorageUtil.getLastLevel(set.id);
+        this.scene.start(SCENE_KEYS.GAME, { setIndex, levelIndex: last });
       },
-      () => this.scene.start(SCENE_KEYS.SELECT),
+      () => this.scene.start(SCENE_KEYS.SET_SELECT),
       () => this.scene.start(SCENE_KEYS.SETTINGS),
       () => this.scene.start(SCENE_KEYS.HELP),
     ];

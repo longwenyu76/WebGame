@@ -3,7 +3,7 @@ import {
   CANVAS_WIDTH, CANVAS_HEIGHT,
   FONT_FAMILY, COLOR_BG, SCENE_KEYS,
 } from '../constants/GameConstants';
-import { LEVELS } from '../config/levels';
+import { LEVEL_SETS } from '../config/levelSets';
 import { StorageUtil } from '../utils/StorageUtil';
 
 const COLS        = 4;
@@ -17,15 +17,18 @@ const TAP_THRESHOLD = 10; // 超过此像素视为滑动，不触发点击
 export class LevelSelectScene extends Phaser.Scene {
   private hasDragged    = false;
   private hadPointerDown = false;
+  private setIndex: number = 0;
 
   constructor() { super({ key: SCENE_KEYS.SELECT }); }
 
-  create(): void {
+  create(data: { setIndex?: number }): void {
+    this.setIndex       = data?.setIndex ?? 0;
     this.hasDragged     = false;
     this.hadPointerDown = false;
 
+    const set   = LEVEL_SETS[this.setIndex];
     const cx        = CANVAS_WIDTH / 2;
-    const totalRows = Math.ceil(LEVELS.length / COLS);
+    const totalRows = Math.ceil(set.levels.length / COLS);
     const totalH    = GRID_TOP + totalRows * CELL_H + 20;
 
     // 滚动到底时，内容底边停在 CANVAS_HEIGHT - BOTTOM_AREA 处
@@ -35,7 +38,7 @@ export class LevelSelectScene extends Phaser.Scene {
     this.add.rectangle(cx, totalH / 2, CANVAS_WIDTH, totalH, COLOR_BG);
 
     // ── 可滚动关卡格子 ────────────────────────────────────────────────────
-    this.drawGrid();
+    this.drawGrid(set);
 
     // ── 固定顶部遮罩 + 标题 ───────────────────────────────────────────────
     this.add.rectangle(cx, TOP_AREA / 2, CANVAS_WIDTH, TOP_AREA, COLOR_BG)
@@ -59,12 +62,12 @@ export class LevelSelectScene extends Phaser.Scene {
       .setOrigin(0.5, 0).setScrollFactor(0).setDepth(11);
     this.add.rectangle(cx, backY + 18, 192, 4, 0x1e2d3d)
       .setOrigin(0.5, 0).setScrollFactor(0).setDepth(11);
-    const backTxt = this.add.text(cx, backY, '← 返回主菜单', {
+    const backTxt = this.add.text(cx, backY, '← 返回', {
       fontSize: '18px', color: '#f9f6f2', fontFamily: FONT_FAMILY,
     }).setOrigin(0.5).setScrollFactor(0).setDepth(11)
       .setInteractive({ useHandCursor: true });
 
-    const back = () => { if (this.hadPointerDown && !this.hasDragged) this.scene.start(SCENE_KEYS.MENU); };
+    const back = () => { if (this.hadPointerDown && !this.hasDragged) this.scene.start(SCENE_KEYS.SET_SELECT); };
     backBg.on('pointerup', back);
     backTxt.on('pointerup', back);
     backBg.on('pointerover', () => backBg.setFillStyle(0x718096));
@@ -101,15 +104,15 @@ export class LevelSelectScene extends Phaser.Scene {
     );
   }
 
-  private drawGrid(): void {
+  private drawGrid(set: { id: string; levels: string[][] }): void {
     const padX = (CANVAS_WIDTH - COLS * CELL_W) / 2 + CELL_W / 2;
 
-    for (let i = 0; i < LEVELS.length; i++) {
+    for (let i = 0; i < set.levels.length; i++) {
       const col = i % COLS;
       const row = Math.floor(i / COLS);
       const x   = padX + col * CELL_W;
       const y   = GRID_TOP + row * CELL_H + CELL_H / 2;
-      const rec = StorageUtil.getRecord(i);
+      const rec = StorageUtil.getRecord(set.id, i);
 
       const bgColor = rec.completed ? 0x1e6b3a : 0x2d3748;
       const bg = this.add.rectangle(x, y, CELL_W - 12, CELL_H - 10, bgColor)
@@ -134,9 +137,12 @@ export class LevelSelectScene extends Phaser.Scene {
       const over = () => bg.setFillStyle(rec.completed ? 0x27ae60 : 0x4a5568);
       const out  = () => bg.setFillStyle(bgColor);
       const idx  = i;
+      const si   = this.setIndex;
       bg.on('pointerover', over).on('pointerout', out)
         .on('pointerup', () => {
-          if (this.hadPointerDown && !this.hasDragged) this.scene.start(SCENE_KEYS.GAME, { levelIndex: idx });
+          if (this.hadPointerDown && !this.hasDragged) {
+            this.scene.start(SCENE_KEYS.GAME, { setIndex: si, levelIndex: idx });
+          }
         });
     }
   }

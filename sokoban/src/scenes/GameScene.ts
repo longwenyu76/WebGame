@@ -10,7 +10,7 @@ import {
 } from '../constants/GameConstants';
 import { GameLogic, Cell } from '../game/GameLogic';
 import { AudioManager } from '../game/AudioManager';
-import { LEVELS, OPTIMAL_MOVES } from '../config/levels';
+import { LEVEL_SETS } from '../config/levelSets';
 import { StorageUtil } from '../utils/StorageUtil';
 
 // ── 素材帧名 ─────────────────────────────────────────────────────────────────
@@ -34,6 +34,7 @@ export class GameScene extends Phaser.Scene {
 
   // ── 游戏状态 ────────────────────────────────────────────────────────────
   private logic!:       GameLogic;
+  private setIndex:     number = 0;
   private levelIndex:   number = 0;
   private isAnimating:  boolean = false;
   private elapsedSec:   number = 0;
@@ -77,7 +78,8 @@ export class GameScene extends Phaser.Scene {
 
   // ── Lifecycle ────────────────────────────────────────────────────────────
 
-  init(data: { levelIndex?: number }): void {
+  init(data: { setIndex?: number; levelIndex?: number }): void {
+    this.setIndex    = data.setIndex ?? 0;
     this.levelIndex  = data.levelIndex ?? 0;
     this.isAnimating = false;
     this.elapsedSec  = 0;
@@ -139,13 +141,15 @@ export class GameScene extends Phaser.Scene {
   // ── 关卡加载 ─────────────────────────────────────────────────────────────
 
   private loadLevel(idx: number): void {
-    this.levelIndex = Phaser.Math.Clamp(idx, 0, LEVELS.length - 1);
-    this.logic = new GameLogic(LEVELS[this.levelIndex]);
+    const set = LEVEL_SETS[this.setIndex];
+    this.levelIndex = Phaser.Math.Clamp(idx, 0, set.levels.length - 1);
+    this.logic = new GameLogic(set.levels[this.levelIndex]);
     this.isAnimating = false;
     this.elapsedSec  = 0;
     this.gameStarted = false;
 
-    StorageUtil.saveLastLevel(this.levelIndex);
+    StorageUtil.saveLastLevel(set.id, this.levelIndex);
+    StorageUtil.saveLastSetIndex(this.setIndex);
 
     // 计算瓦片尺寸和偏移，让地图居中在游戏区域内
     // 优先保证地图完整显示，不强制最小尺寸（避免大地图溢出）
@@ -341,10 +345,11 @@ export class GameScene extends Phaser.Scene {
 
   private goNextLevel(): void {
     this.clearOverlay();
-    if (this.levelIndex + 1 < LEVELS.length) {
+    const set = LEVEL_SETS[this.setIndex];
+    if (this.levelIndex + 1 < set.levels.length) {
       this.loadLevel(this.levelIndex + 1);
     } else {
-      this.scene.start(SCENE_KEYS.SELECT);
+      this.scene.start(SCENE_KEYS.SELECT, { setIndex: this.setIndex });
     }
   }
 
@@ -352,8 +357,9 @@ export class GameScene extends Phaser.Scene {
 
   private onWin(): void {
     this.audio.playWin();
-    StorageUtil.saveRecord(this.levelIndex, this.logic.moves, OPTIMAL_MOVES[this.levelIndex]);
-    const rec = StorageUtil.getRecord(this.levelIndex);
+    const set = LEVEL_SETS[this.setIndex];
+    StorageUtil.saveRecord(set.id, this.levelIndex, this.logic.moves, set.optimalMoves[this.levelIndex]);
+    const rec = StorageUtil.getRecord(set.id, this.levelIndex);
 
     const cx = CANVAS_WIDTH / 2;
     const cy = CANVAS_HEIGHT / 2;
@@ -386,7 +392,7 @@ export class GameScene extends Phaser.Scene {
     const btns: [string, () => void, number][] = [
       ['下一关', () => this.goNextLevel(), 0x2980b9],
       ['重  玩', () => this.doReset(),     0x27ae60],
-      ['选  关', () => this.scene.start(SCENE_KEYS.SELECT), 0x8f7a66],
+      ['选  关', () => this.scene.start(SCENE_KEYS.SELECT, { setIndex: this.setIndex }), 0x8f7a66],
     ];
     btns.forEach(([label, fn, color], i) => {
       const bx = cx - 110 + i * 110;
@@ -452,7 +458,7 @@ export class GameScene extends Phaser.Scene {
       ['返回', () => this.scene.start(SCENE_KEYS.MENU),         0x4a5568],
       ['撤销', () => { if (!this.isAnimating) this.doUndo(); }, COLOR_BTN_UNDO],
       ['重开', () => this.doReset(),                             COLOR_BTN_RESET],
-      ['选关', () => this.scene.start(SCENE_KEYS.SELECT),        0x4a5568],
+      ['选关', () => this.scene.start(SCENE_KEYS.SELECT, { setIndex: this.setIndex }), 0x4a5568],
       ['设置', openSettings,                                     0x2c5364],
     ];
     // 5 等分 480px：中心 48 / 144 / 240 / 336 / 432
