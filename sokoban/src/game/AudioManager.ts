@@ -49,6 +49,8 @@ export class AudioManager {
   private musicEnabled: boolean;
   private sfxEnabled:   boolean;
 
+  private readonly onVisibilityChange: () => void;
+
   constructor() {
     const s = SettingsManager.get();
     this.musicVolume  = s.musicVolume;
@@ -56,7 +58,7 @@ export class AudioManager {
     this.musicEnabled = s.musicEnabled;
     this.sfxEnabled   = s.sfxEnabled;
 
-    document.addEventListener('visibilitychange', () => {
+    this.onVisibilityChange = () => {
       if (document.visibilityState === 'visible' && this.ctx?.state === 'suspended') {
         void this.ctx.resume().then(() => {
           if (this.bgmRunning && this.musicEnabled) {
@@ -66,7 +68,8 @@ export class AudioManager {
           }
         });
       }
-    });
+    };
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   // ── AudioContext ────────────────────────────────────────────────────────────
@@ -245,6 +248,7 @@ export class AudioManager {
 
   destroy(): void {
     this.stopBGM();
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
     void this.ctx?.close();
     this.ctx     = null;
     this.bgmGain = null;

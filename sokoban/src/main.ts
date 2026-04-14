@@ -21,6 +21,7 @@ const config: Phaser.Types.Core.GameConfig = {
     min: { width: 320, height: 533 },
     max: { width: 960, height: 1600 },
   },
+  fps:    { target: 30, forceSetTimeOut: false },
   render: { antialias: true, roundPixels: true },
 };
 

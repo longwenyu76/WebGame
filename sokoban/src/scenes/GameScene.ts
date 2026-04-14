@@ -41,9 +41,10 @@ export class GameScene extends Phaser.Scene {
   private gameStarted:  boolean = false;
 
   // ── 渲染参数 ────────────────────────────────────────────────────────────
-  private tileSize:  number = 48;
-  private gridOffX:  number = 0;
-  private gridOffY:  number = 0;
+  private tileSize:     number = 48;
+  private gridOffX:     number = 0;
+  private gridOffY:     number = 0;
+  private lastTimerTxt: string = '';
 
   // ── 显示对象 ────────────────────────────────────────────────────────────
   private bgTiles:    Phaser.GameObjects.Image[] = []; // 静态背景（墙/地板/目标）
@@ -73,22 +74,21 @@ export class GameScene extends Phaser.Scene {
   private keyN!:     Phaser.Input.Keyboard.Key;
   private swipeStart:  { x: number; y: number } | null = null;
   private inputReady:  boolean = false;   // 防止场景切换时指针事件穿透
-  private pendingMove: { dr: number; dc: number } | null = null; // 动画期间缓冲的下一步
 
   constructor() { super({ key: SCENE_KEYS.GAME }); }
 
   // ── Lifecycle ────────────────────────────────────────────────────────────
 
   init(data: { setIndex?: number; levelIndex?: number }): void {
-    this.setIndex    = data.setIndex ?? 0;
-    this.levelIndex  = data.levelIndex ?? 0;
-    this.isAnimating = false;
-    this.elapsedSec  = 0;
-    this.gameStarted = false;
-    this.overlay     = null;
-    this.boxObjs     = [];
-    this.inputReady  = false;
-    this.pendingMove = null;
+    this.setIndex     = data.setIndex ?? 0;
+    this.levelIndex   = data.levelIndex ?? 0;
+    this.isAnimating  = false;
+    this.elapsedSec   = 0;
+    this.gameStarted  = false;
+    this.lastTimerTxt = '';
+    this.overlay      = null;
+    this.boxObjs      = [];
+    this.inputReady   = false;
   }
 
   create(): void {
@@ -124,10 +124,11 @@ export class GameScene extends Phaser.Scene {
 
     if (this.gameStarted && !this.isAnimating && !this.overlay) {
       this.elapsedSec += delta / 1000;
-      this.txtTimer.setText(this.formatTime(this.elapsedSec));
+      const t = this.formatTime(this.elapsedSec);
+      if (t !== this.lastTimerTxt) { this.lastTimerTxt = t; this.txtTimer.setText(t); }
     }
 
-    if (this.isAnimating || this.overlay) return;  // 键盘也缓冲一步
+    if (this.isAnimating || this.overlay) return;
 
     const JD = Phaser.Input.Keyboard.JustDown;
     if (JD(this.keyR)) { this.doReset(); return; }
@@ -146,10 +147,10 @@ export class GameScene extends Phaser.Scene {
     const set = LEVEL_SETS[this.setIndex];
     this.levelIndex = Phaser.Math.Clamp(idx, 0, set.levels.length - 1);
     this.logic = new GameLogic(set.levels[this.levelIndex]);
-    this.isAnimating = false;
-    this.pendingMove = null;
-    this.elapsedSec  = 0;
-    this.gameStarted = false;
+    this.isAnimating  = false;
+    this.elapsedSec   = 0;
+    this.gameStarted  = false;
+    this.lastTimerTxt = '';
 
     StorageUtil.saveLastLevel(set.id, this.levelIndex);
     StorageUtil.saveLastSetIndex(this.setIndex);
@@ -258,18 +259,7 @@ export class GameScene extends Phaser.Scene {
   // ── 移动逻辑 ─────────────────────────────────────────────────────────────
 
   private tryMove(dr: number, dc: number): void {
-    if (!this.inputReady) return;
-    if (this.isAnimating) {
-      // 动画进行中：缓冲最新输入，动画结束后立刻执行
-      this.pendingMove = { dr, dc };
-      return;
-    }
-    if (this.overlay) return;
-    this.executeMove(dr, dc);
-  }
-
-  private executeMove(dr: number, dc: number): void {
-    this.pendingMove = null;
+    if (!this.inputReady || this.isAnimating) return;
     this.gameStarted = true;
 
     const oldPR = this.logic.pRow;
@@ -286,15 +276,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     const result = this.logic.move(dr, dc);
-    if (!result.moved) {
-      // 此方向走不通，尝试执行后续缓冲（如果有）
-      if (this.pendingMove) {
-        const { dr: ndr, dc: ndc } = this.pendingMove;
-        this.pendingMove = null;
-        this.executeMove(ndr, ndc);
-      }
-      return;
-    }
+    if (!result.moved) return;
 
     this.isAnimating = true;
 
@@ -322,7 +304,7 @@ export class GameScene extends Phaser.Scene {
       });
     }
 
-    // 播放音效（与动画同步，不提前）
+    // 立刻播放音效（不等动画）
     if (result.pushed) {
       const landedOnTarget = this.logic.getCell(
         this.logic.pRow + dr, this.logic.pCol + dc
@@ -341,15 +323,7 @@ export class GameScene extends Phaser.Scene {
       onComplete: () => {
         this.isAnimating = false;
         this.updateHUD();
-        if (result.won) {
-          this.pendingMove = null;
-          this.onWin();
-        } else if (this.pendingMove) {
-          // 动画刚结束，立刻执行缓冲的下一步
-          const { dr: ndr, dc: ndc } = this.pendingMove;
-          this.pendingMove = null;
-          this.executeMove(ndr, ndc);
-        }
+        if (result.won) this.onWin();
       },
     });
   }
@@ -360,9 +334,27 @@ export class GameScene extends Phaser.Scene {
     if (!this.logic.canUndo() || this.isAnimating) return;
     this.audio.playUndo();
     this.logic.undo();
-    this.destroyGameObjects();
-    this.drawBackground();
-    this.createMobileObjects();
+
+    // 只更新玩家和箱子的位置/帧，背景不变
+    const { x: px, y: py } = this.cellCenter(this.logic.pRow, this.logic.pCol);
+    this.playerObj.row = this.logic.pRow;
+    this.playerObj.col = this.logic.pCol;
+    this.playerObj.img.setPosition(px, py);
+
+    // 从 logic 重新扫描箱子位置并同步到已有 Image 对象
+    let bi = 0;
+    for (let r = 0; r < this.logic.rows; r++) {
+      for (let c = 0; c < this.logic.cols; c++) {
+        const cell = this.logic.getCell(r, c);
+        if (cell === '$' || cell === '*') {
+          const box = this.boxObjs[bi++];
+          box.row = r; box.col = c;
+          const { x, y } = this.cellCenter(r, c);
+          box.img.setPosition(x, y);
+          box.img.setFrame(cell === '*' ? FRAME_BOX_ON_TGT : FRAME_BOX);
+        }
+      }
+    }
     this.updateHUD();
   }
 
@@ -545,11 +537,11 @@ export class GameScene extends Phaser.Scene {
       this.add.text(bx, by, label, {
         fontSize: '26px', color: '#ecf0f1', fontFamily: FONT_FAMILY,
       }).setOrigin(0.5).setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => this.tryMove(dr, dc));
+        .on('pointerdown', () => { if (!this.isAnimating && !this.overlay) this.tryMove(dr, dc); });
 
       this.add.rectangle(bx, by - dw / 2 + 1, dw - 4, 3, 0x7a9ab5).setOrigin(0.5, 0);
       this.add.rectangle(bx, by + dw / 2 - 4, dw - 4, 3, 0x1e2d3d).setOrigin(0.5, 0);
-      bg.on('pointerdown', () => this.tryMove(dr, dc));
+      bg.on('pointerdown', () => { if (!this.isAnimating && !this.overlay) this.tryMove(dr, dc); });
       bg.on('pointerover', () => bg.setFillStyle(COLOR_BTN_HOVER));
       bg.on('pointerout',  () => bg.setFillStyle(COLOR_BTN));
     });

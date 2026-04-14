@@ -8,7 +8,7 @@ export interface MoveResult {
 }
 
 interface Snapshot {
-  grid:   Cell[][];
+  cells:  Array<{ r: number; c: number; was: Cell }>;
   moves:  number;
   pushes: number;
   pRow:   number;
@@ -69,8 +69,8 @@ export class GameLogic {
         return { moved: false, pushed: false, won: false };
       }
 
-      // 保存状态
-      this.saveSnapshot();
+      // 保存状态（玩家格、箱子格、箱子新格）
+      this.saveSnapshot([[this.pRow, this.pCol], [nr, nc], [br, bc]]);
 
       // 移动箱子
       const boxOnTarget = dest === '*';
@@ -79,7 +79,8 @@ export class GameLogic {
       pushed = true;
       this.pushes++;
     } else {
-      this.saveSnapshot();
+      // 保存状态（玩家格、目标格）
+      this.saveSnapshot([[this.pRow, this.pCol], [nr, nc]]);
     }
 
     // 移动玩家
@@ -101,7 +102,7 @@ export class GameLogic {
   undo(): boolean {
     if (this.history.length === 0) return false;
     const snap = this.history.pop()!;
-    this.grid   = snap.grid;
+    for (const { r, c, was } of snap.cells) this.grid[r][c] = was;
     this.moves  = snap.moves;
     this.pushes = snap.pushes;
     this.pRow   = snap.pRow;
@@ -160,9 +161,9 @@ export class GameLogic {
     return g.map(row => [...row]);
   }
 
-  private saveSnapshot(): void {
+  private saveSnapshot(positions: Array<[number, number]>): void {
     this.history.push({
-      grid:   this.cloneGrid(this.grid),
+      cells:  positions.map(([r, c]) => ({ r, c, was: this.grid[r][c] })),
       moves:  this.moves,
       pushes: this.pushes,
       pRow:   this.pRow,
