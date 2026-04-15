@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
 import {
   CANVAS_WIDTH, CANVAS_HEIGHT,
-  FONT_FAMILY, COLOR_BG, COLOR_BTN, COLOR_BTN_HOVER,
+  FONT_FAMILY, COLOR_BG,
   SCENE_KEYS,
 } from '../constants/GameConstants';
 import { StorageUtil } from '../utils/StorageUtil';
 import { LEVEL_SETS } from '../config/levelSets';
+import { makeButton } from '../ui/makeButton';
 
 export class MenuScene extends Phaser.Scene {
   constructor() { super({ key: SCENE_KEYS.MENU }); }
@@ -50,7 +51,7 @@ export class MenuScene extends Phaser.Scene {
     ];
 
     btns.forEach((label, i) => {
-      this.makeButton(cx, btnY[i], label, actions[i]);
+      makeButton(this, cx, btnY[i], label, actions[i]);
     });
 
     // 版权
@@ -89,25 +90,5 @@ export class MenuScene extends Phaser.Scene {
     }));
   }
 
-  private makeButton(x: number, y: number, label: string, onClick: () => void): void {
-    const w = 240, h = 52;
-    // 底部偏移深色（凸起感来自下方阴影）
-    this.add.rectangle(x + 3, y + 5, w, h, 0x0c0e16).setOrigin(0.5);
-    // 主体
-    const bg = this.add.rectangle(x, y, w, h, COLOR_BTN)
-      .setOrigin(0.5).setInteractive({ useHandCursor: true });
-    // 顶部亮条（模拟上方光源）
-    this.add.rectangle(x, y - h / 2 + 1, w - 8, 4, 0x7a9ab5).setOrigin(0.5, 0);
-    // 底部暗条（强化立体层次）
-    this.add.rectangle(x, y + h / 2 - 5, w - 8, 4, 0x1e2d3d).setOrigin(0.5, 0);
-    const txt = this.add.text(x, y, label, {
-      fontSize: '22px', color: '#f9f6f2', fontFamily: FONT_FAMILY,
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-    const over = () => bg.setFillStyle(COLOR_BTN_HOVER);
-    const out  = () => bg.setFillStyle(COLOR_BTN);
-    bg.on('pointerover', over).on('pointerout', out).on('pointerdown', onClick);
-    txt.on('pointerover', over).on('pointerout', out).on('pointerdown', onClick);
-  }
 
 }

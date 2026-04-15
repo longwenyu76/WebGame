@@ -12,6 +12,7 @@ import { GameLogic, Cell } from '../game/GameLogic';
 import { AudioManager } from '../game/AudioManager';
 import { LEVEL_SETS } from '../config/levelSets';
 import { StorageUtil } from '../utils/StorageUtil';
+import { makeButton, BTN_SUCCESS, BTN_SECONDARY } from '../ui/makeButton';
 
 // ── 素材帧名 ─────────────────────────────────────────────────────────────────
 const FRAME_WALL        = 'block_05.png';
@@ -411,21 +412,14 @@ export class GameScene extends Phaser.Scene {
 
     // 按钮行
     const btnY = cy + 110;
-    const btns: [string, () => void, number][] = [
-      ['下一关', () => this.goNextLevel(), 0x2980b9],
-      ['重  玩', () => this.doReset(),     0x27ae60],
-      ['选  关', () => this.scene.start(SCENE_KEYS.SELECT, { setIndex: this.setIndex }), 0x8f7a66],
+    const winBtns: [string, () => void, [number,number]][] = [
+      ['下一关', () => this.goNextLevel(), [0x2563eb, 0x1d4ed8]],
+      ['重  玩', () => this.doReset(),     BTN_SUCCESS],
+      ['选  关', () => this.scene.start(SCENE_KEYS.SELECT, { setIndex: this.setIndex }), BTN_SECONDARY],
     ];
-    btns.forEach(([label, fn, color], i) => {
+    winBtns.forEach(([label, fn, colors], i) => {
       const bx = cx - 110 + i * 110;
-      const bg = this.add.rectangle(bx, btnY, 100, 44, color)
-        .setOrigin(0.5).setInteractive({ useHandCursor: true });
-      const txt = this.add.text(bx, btnY, label, {
-        fontSize: '17px', color: '#f9f6f2', fontFamily: FONT_FAMILY,
-      }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-      bg.on('pointerdown', fn);
-      txt.on('pointerdown', fn);
-      items.push(bg, txt);
+      items.push(makeButton(this, bx, btnY, label, fn, { w: 100, h: 44, fontSize: '17px', colors }));
     });
 
     this.overlay = this.add.container(0, 0, items).setDepth(20);
