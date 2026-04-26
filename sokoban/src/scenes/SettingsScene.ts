@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { SCENE_KEYS, CANVAS_WIDTH, CANVAS_HEIGHT, FONT_FAMILY } from '../constants/GameConstants';
 import { SettingsManager, GameSettings } from '../utils/SettingsManager';
+import { makeButton } from '../ui/makeButton';
 
 const PAD  = { top: 6, bottom: 4, left: 4, right: 4 };
 const CX   = CANVAS_WIDTH / 2;
@@ -109,29 +110,10 @@ export class SettingsScene extends Phaser.Scene {
 
     const backLabel = fromGame ? '← 返回游戏' : '← 返回主页';
     const backY2 = y + 16;
-    this.add.rectangle(CX + 3, backY2 + 5, 200, 44, 0x0c0e16).setOrigin(0.5);
-    const backBg = this.add.rectangle(CX, backY2, 200, 44, 0x4a5568).setOrigin(0.5)
-      .setInteractive({ useHandCursor: true });
-    const backBtn = this.add.text(CX, backY2, backLabel, {
-      fontSize: '20px', color: '#f39c12', fontFamily: FONT,
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-    this.add.rectangle(CX, backY2 - 20, 192, 3, 0x7a9ab5).setOrigin(0.5, 0);
-    this.add.rectangle(CX, backY2 + 17, 192, 3, 0x1e2d3d).setOrigin(0.5, 0);
-    backBg.on('pointerover', () => backBg.setFillStyle(0x718096));
-    backBg.on('pointerout',  () => backBg.setFillStyle(0x4a5568));
-    backBg.on('pointerdown', () => {
+    makeButton(this, CX, backY2, backLabel, () => {
       if (fromGame) { this.scene.resume(SCENE_KEYS.GAME); this.scene.stop(); }
       else { this.scene.start(SCENE_KEYS.MENU); }
-    });
-    backBtn.on('pointerdown', () => {
-      if (fromGame) {
-        this.scene.resume(SCENE_KEYS.GAME);
-        this.scene.stop();
-      } else {
-        this.scene.start(SCENE_KEYS.MENU);
-      }
-    });
+    }, { w: 200, h: 44, fontSize: '18px' });
 
     this.add.text(CX, CANVAS_HEIGHT - 30, '点击开关切换，点击 [-][+] 调整音量', {
       fontSize: '12px', color: '#445566', padding: PAD, fontFamily: FONT,

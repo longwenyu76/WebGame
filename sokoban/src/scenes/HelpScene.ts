@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import {
   CANVAS_WIDTH, CANVAS_HEIGHT, FONT_FAMILY, COLOR_BG, SCENE_KEYS,
 } from '../constants/GameConstants';
+import { makeButton } from '../ui/makeButton';
 
 const CX  = CANVAS_WIDTH / 2;
 const PAD = 24;          // 左右内边距
@@ -54,13 +55,9 @@ export class HelpScene extends Phaser.Scene {
       fontSize: '24px', color: '#f39c12', fontStyle: 'bold', fontFamily: FONT_FAMILY,
     }).setOrigin(0.5).setScrollFactor(0).setDepth(11);
 
-    const backBtn = this.add.text(PAD, TOP / 2, '← 返回', {
-      fontSize: '15px', color: '#7f8c8d', fontFamily: FONT_FAMILY,
-    }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(11)
-      .setInteractive({ useHandCursor: true });
-    backBtn.on('pointerover',  () => backBtn.setColor('#aabbcc'));
-    backBtn.on('pointerout',   () => backBtn.setColor('#7f8c8d'));
-    backBtn.on('pointerdown',  () => this.scene.start(SCENE_KEYS.MENU));
+    makeButton(this, PAD + 60, TOP / 2, '← 返回', () => this.scene.start(SCENE_KEYS.MENU),
+      { w: 100, h: 36, fontSize: '14px' })
+      .setScrollFactor(0).setDepth(11);
 
     // ── 触摸拖拽 ─────────────────────────────────────────────────────────
     let dragY0 = 0, dragSY0 = 0, dragging = false;

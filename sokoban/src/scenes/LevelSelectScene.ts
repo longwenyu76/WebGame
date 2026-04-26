@@ -5,6 +5,7 @@ import {
 } from '../constants/GameConstants';
 import { LEVEL_SETS } from '../config/levelSets';
 import { StorageUtil } from '../utils/StorageUtil';
+import { makeButton } from '../ui/makeButton';
 
 const COLS        = 4;
 const CELL_W      = 100;
@@ -53,25 +54,9 @@ export class LevelSelectScene extends Phaser.Scene {
       .setScrollFactor(0).setDepth(10);
 
     const backY = CANVAS_HEIGHT - BOTTOM_AREA / 2;
-    this.add.rectangle(cx + 3, backY + 5, 200, 46, 0x0c0e16)
-      .setOrigin(0.5).setScrollFactor(0).setDepth(11);
-    const backBg = this.add.rectangle(cx, backY, 200, 46, 0x4a5568)
-      .setOrigin(0.5).setScrollFactor(0).setDepth(11)
-      .setInteractive({ useHandCursor: true });
-    this.add.rectangle(cx, backY - 21, 192, 4, 0x7a9ab5)
-      .setOrigin(0.5, 0).setScrollFactor(0).setDepth(11);
-    this.add.rectangle(cx, backY + 18, 192, 4, 0x1e2d3d)
-      .setOrigin(0.5, 0).setScrollFactor(0).setDepth(11);
-    const backTxt = this.add.text(cx, backY, '← 返回', {
-      fontSize: '18px', color: '#f9f6f2', fontFamily: FONT_FAMILY,
-    }).setOrigin(0.5).setScrollFactor(0).setDepth(11)
-      .setInteractive({ useHandCursor: true });
-
     const back = () => { if (this.hadPointerDown && !this.hasDragged) this.scene.start(SCENE_KEYS.SET_SELECT); };
-    backBg.on('pointerup', back);
-    backTxt.on('pointerup', back);
-    backBg.on('pointerover', () => backBg.setFillStyle(0x718096));
-    backBg.on('pointerout',  () => backBg.setFillStyle(0x4a5568));
+    makeButton(this, cx, backY, '← 返回', back, { w: 200, h: 46, fontSize: '18px' })
+      .setScrollFactor(0).setDepth(11);
 
     // ── 触摸拖拽滚动 ──────────────────────────────────────────────────────
     let dragStartY       = 0;

@@ -12,7 +12,7 @@ import { GameLogic, Cell } from '../game/GameLogic';
 import { AudioManager } from '../game/AudioManager';
 import { LEVEL_SETS } from '../config/levelSets';
 import { StorageUtil } from '../utils/StorageUtil';
-import { makeButton, BTN_SUCCESS, BTN_SECONDARY } from '../ui/makeButton';
+import { makeButton, BTN_DEFAULT, BTN_SUCCESS, BTN_DANGER, BTN_SECONDARY, BtnColorSet } from '../ui/makeButton';
 
 // ── 素材帧名 ─────────────────────────────────────────────────────────────────
 const FRAME_WALL        = 'block_05.png';
@@ -412,7 +412,7 @@ export class GameScene extends Phaser.Scene {
 
     // 按钮行
     const btnY = cy + 110;
-    const winBtns: [string, () => void, [number,number]][] = [
+    const winBtns: [string, () => void, BtnColorSet | [number, number]][] = [
       ['下一关', () => this.goNextLevel(), [0x2563eb, 0x1d4ed8]],
       ['重  玩', () => this.doReset(),     BTN_SUCCESS],
       ['选  关', () => this.scene.start(SCENE_KEYS.SELECT, { setIndex: this.setIndex }), BTN_SECONDARY],
@@ -464,33 +464,21 @@ export class GameScene extends Phaser.Scene {
 
     // 行3：五按钮（返回/撤销/重开/选关/设置）
     const btnY = 80;
-    const btnW = 84;
-    const btnH = 26;
     const openSettings = () => {
       this.scene.launch(SCENE_KEYS.SETTINGS, { from: 'game' });
       this.scene.pause();
     };
-    const btns: [string, () => void, number][] = [
-      ['返回', () => this.scene.start(SCENE_KEYS.MENU),         0x4a5568],
-      ['撤销', () => { if (!this.isAnimating) this.doUndo(); }, COLOR_BTN_UNDO],
-      ['重开', () => this.doReset(),                             COLOR_BTN_RESET],
-      ['选关', () => this.scene.start(SCENE_KEYS.SELECT, { setIndex: this.setIndex }), 0x4a5568],
-      ['设置', openSettings,                                     0x2c5364],
+    const BTN_UNDO: BtnColorSet = [0x1a3d5c, 0x1e4d7b, 0x2980b9, 0x2980b9, 0x1e4d7b];
+    const hudBtns: [string, () => void, BtnColorSet][] = [
+      ['返回', () => this.scene.start(SCENE_KEYS.MENU),                                     BTN_DEFAULT],
+      ['撤销', () => { if (!this.isAnimating) this.doUndo(); },                              BTN_UNDO],
+      ['重开', () => this.doReset(),                                                         BTN_DANGER],
+      ['选关', () => this.scene.start(SCENE_KEYS.SELECT, { setIndex: this.setIndex }),       BTN_DEFAULT],
+      ['设置', openSettings,                                                                  BTN_SECONDARY],
     ];
     // 5 等分 480px：中心 48 / 144 / 240 / 336 / 432
-    const bxList = [48, 144, 240, 336, 432];
-    btns.forEach(([label, fn, color], i) => {
-      const bx = bxList[i];
-      this.add.rectangle(bx + 2, btnY + 4, btnW, btnH, 0x0c0e16).setOrigin(0.5);
-      const bg = this.add.rectangle(bx, btnY, btnW, btnH, color)
-        .setOrigin(0.5).setInteractive({ useHandCursor: true });
-      this.add.rectangle(bx, btnY - btnH / 2 + 1, btnW - 4, 2, 0x7a9ab5).setOrigin(0.5, 0);
-      this.add.rectangle(bx, btnY + btnH / 2 - 3, btnW - 4, 2, 0x1e2d3d).setOrigin(0.5, 0);
-      this.add.text(bx, btnY, label, {
-        fontSize: '13px', color: '#f9f6f2', fontFamily: FONT_FAMILY,
-      }).setOrigin(0.5).setInteractive({ useHandCursor: true })
-        .on('pointerdown', fn);
-      bg.on('pointerdown', fn);
+    hudBtns.forEach(([label, fn, colors], i) => {
+      makeButton(this, [48, 144, 240, 336, 432][i], btnY, label, fn, { w: 84, h: 36, fontSize: '13px', colors });
     });
   }
 
@@ -523,21 +511,12 @@ export class GameScene extends Phaser.Scene {
       ['→',  1,  0,   dpadCX + ds,  dpadCY],
     ];
 
+    const dw = ds - 4;
     dirs.forEach(([label, dc, dr, bx, by]) => {
-      const dw = ds - 4;
-      this.add.rectangle(bx + 2, by + 4, dw, dw, 0x0c0e16).setOrigin(0.5);
-      const bg = this.add.rectangle(bx, by, dw, dw, COLOR_BTN, 1)
-        .setOrigin(0.5).setInteractive({ useHandCursor: true });
-      this.add.text(bx, by, label, {
-        fontSize: '26px', color: '#ecf0f1', fontFamily: FONT_FAMILY,
-      }).setOrigin(0.5).setInteractive({ useHandCursor: true })
-        .on('pointerdown', () => { if (!this.isAnimating && !this.overlay) this.tryMove(dr, dc); });
-
-      this.add.rectangle(bx, by - dw / 2 + 1, dw - 4, 3, 0x7a9ab5).setOrigin(0.5, 0);
-      this.add.rectangle(bx, by + dw / 2 - 4, dw - 4, 3, 0x1e2d3d).setOrigin(0.5, 0);
-      bg.on('pointerdown', () => { if (!this.isAnimating && !this.overlay) this.tryMove(dr, dc); });
-      bg.on('pointerover', () => bg.setFillStyle(COLOR_BTN_HOVER));
-      bg.on('pointerout',  () => bg.setFillStyle(COLOR_BTN));
+      makeButton(this, bx, by, label,
+        () => { if (!this.isAnimating && !this.overlay) this.tryMove(dr, dc); },
+        { w: dw, h: dw, fontSize: '26px', triggerOnDown: true },
+      );
     });
   }
 
