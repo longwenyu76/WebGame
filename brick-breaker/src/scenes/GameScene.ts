@@ -200,10 +200,16 @@ export class GameScene extends Phaser.Scene {
       if (b) { b.x = this.paddle.x; b.y = this.paddle.top - b.radius; }
     } else {
       for (const ball of this.balls) {
-        ball.update(dt);
-        this.handleWallCollisions(ball);
-        this.handleBrickCollisions(ball);
-        this.handlePaddleCollision(ball);
+        // 子步进：防止高速球穿透砖块（隧穿效应）
+        // 每帧拆成 4 步，每步后立即检测碰撞，确保球不会跳过任何砖块
+        const SUBSTEPS = 4;
+        const subDt = dt / SUBSTEPS;
+        for (let s = 0; s < SUBSTEPS; s++) {
+          ball.update(subDt);
+          this.handleWallCollisions(ball);
+          this.handleBrickCollisions(ball);
+          this.handlePaddleCollision(ball);
+        }
       }
 
       if (this.fireBall) this.recordTrails();

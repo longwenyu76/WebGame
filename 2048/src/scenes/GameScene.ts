@@ -11,6 +11,7 @@ import {
 import { Grid, Direction, MoveResult, GridSnapshot } from '../game/Grid';
 import { AudioManager } from '../game/AudioManager';
 import { StorageUtil } from '../utils/StorageUtil';
+import { makeButton, BTN_DEFAULT, BTN_DARK, BTN_DANGER } from '../ui/makeButton';
 
 // ── Tile display object ────────────────────────────────────────────────────────
 interface TileObj {
@@ -41,8 +42,7 @@ export class GameScene extends Phaser.Scene {
   private txtScore!:  Phaser.GameObjects.Text;
   private txtBest!:   Phaser.GameObjects.Text;
   private overlay:    Phaser.GameObjects.Container | null = null;
-  private undoBtnBg!: Phaser.GameObjects.Rectangle;
-  private undoBtnTxt!: Phaser.GameObjects.Text;
+  private undoBtn!: Phaser.GameObjects.Container;
 
   // ── Audio ───────────────────────────────────────────────────────────────────
   private audio!: AudioManager;
@@ -123,26 +123,24 @@ export class GameScene extends Phaser.Scene {
     const row2Y = 168;  // 保存并退出
 
     // New Game
-    this.makeButton(CANVAS_WIDTH / 2 - 90, row1Y, '新 游 戏', 0x8f7a66, () => {
+    makeButton(this, CANVAS_WIDTH / 2 - 90, row1Y, '新 游 戏', () => {
       if (this.isAnimating) return;
       this.clearOverlay();
       this.startNewGame();
-    });
+    }, { w: 150, h: 46, colors: BTN_DEFAULT });
 
     // Undo
-    const undoBtn = this.makeButton(CANVAS_WIDTH / 2 + 90, row1Y, '  撤 销  ', 0x8f7a66, () => {
+    this.undoBtn = makeButton(this, CANVAS_WIDTH / 2 + 90, row1Y, '撤 销', () => {
       if (this.isAnimating || this.gameOver) return;
       this.doUndo();
-    });
-    this.undoBtnBg  = undoBtn.bg;
-    this.undoBtnTxt = undoBtn.txt;
+    }, { w: 150, h: 46, colors: BTN_DEFAULT });
     this.setUndoEnabled(false);  // disabled until first move
 
     // Save & return to platform
-    this.makeButton(CANVAS_WIDTH / 2, row2Y, '保存并退出', 0x776e65, () => {
+    makeButton(this, CANVAS_WIDTH / 2, row2Y, '保存并退出', () => {
       this.autoSave();
       this.showSaveAndExit();
-    });
+    }, { w: 200, h: 42, fontSize: '18px', colors: BTN_DARK });
 
     // Copyright
     this.add.text(CANVAS_WIDTH / 2, CANVAS_HEIGHT - 14, '灵感来自 Gabriele Cirulli 的 2048 · Built with Phaser 3', {
@@ -150,27 +148,8 @@ export class GameScene extends Phaser.Scene {
     }).setOrigin(0.5, 1);
   }
 
-  private makeButton(
-    x: number, y: number, label: string, color: number,
-    onClick: () => void,
-  ): { bg: Phaser.GameObjects.Rectangle; txt: Phaser.GameObjects.Text } {
-    const bg = this.add.rectangle(x, y, 150, 50, color, 1)
-      .setOrigin(0.5).setInteractive({ useHandCursor: true });
-    const txt = this.add.text(x, y, label, {
-      fontSize: '20px', color: '#f9f6f2', fontFamily: FONT_FAMILY,
-    }).setOrigin(0.5);
-
-    const over = () => { bg.setFillStyle(0xa0856e); };
-    const out  = () => { bg.setFillStyle(color);    };
-    bg.on('pointerover', over).on('pointerout', out).on('pointerdown', onClick);
-    txt.setInteractive({ useHandCursor: true });
-    txt.on('pointerover', over).on('pointerout', out).on('pointerdown', onClick);
-    return { bg, txt };
-  }
-
   private setUndoEnabled(enabled: boolean): void {
-    this.undoBtnBg.setFillStyle(enabled ? 0x8f7a66 : 0xbbada0);
-    this.undoBtnTxt.setAlpha(enabled ? 1 : 0.5);
+    this.undoBtn.setAlpha(enabled ? 1 : 0.4);
   }
 
   // ── Input ─────────────────────────────────────────────────────────────────────
@@ -530,25 +509,12 @@ export class GameScene extends Phaser.Scene {
       fontSize: '28px', color: '#f9f6f2', fontStyle: 'bold', fontFamily: FONT_FAMILY,
     }).setOrigin(0.5));
 
-    // Continue button
-    const contBg = this.add.rectangle(cx - 80, cy + 80, 140, 46, 0x8f7a66)
-      .setOrigin(0.5).setInteractive({ useHandCursor: true });
-    const contTxt = this.add.text(cx - 80, cy + 80, '继续游戏', {
-      fontSize: '20px', color: '#f9f6f2', fontFamily: FONT_FAMILY,
-    }).setOrigin(0.5);
-    contBg.on('pointerdown', () => this.clearOverlay());
-    contTxt.setInteractive().on('pointerdown', () => this.clearOverlay());
-    items.push(contBg, contTxt);
-
-    // Restart button
-    const restBg = this.add.rectangle(cx + 80, cy + 80, 140, 46, 0xf65e3b)
-      .setOrigin(0.5).setInteractive({ useHandCursor: true });
-    const restTxt = this.add.text(cx + 80, cy + 80, '重新开始', {
-      fontSize: '20px', color: '#f9f6f2', fontFamily: FONT_FAMILY,
-    }).setOrigin(0.5);
-    restBg.on('pointerdown', () => { this.clearOverlay(); this.startNewGame(); });
-    restTxt.setInteractive().on('pointerdown', () => { this.clearOverlay(); this.startNewGame(); });
-    items.push(restBg, restTxt);
+    items.push(makeButton(this, cx - 80, cy + 80, '继续游戏',
+      () => this.clearOverlay(),
+      { w: 140, h: 46, colors: BTN_DEFAULT }));
+    items.push(makeButton(this, cx + 80, cy + 80, '重新开始',
+      () => { this.clearOverlay(); this.startNewGame(); },
+      { w: 140, h: 46, colors: BTN_DANGER }));
 
     this.overlay = this.add.container(0, 0, items).setDepth(10);
   }
@@ -572,14 +538,9 @@ export class GameScene extends Phaser.Scene {
       fontSize: '22px', color: '#ffdd44', fontFamily: FONT_FAMILY,
     }).setOrigin(0.5));
 
-    const restBg = this.add.rectangle(cx, cy + 80, 180, 50, 0x6666ff)
-      .setOrigin(0.5).setInteractive({ useHandCursor: true });
-    const restTxt = this.add.text(cx, cy + 80, '重 新 开 始', {
-      fontSize: '22px', color: '#ffffff', fontFamily: FONT_FAMILY,
-    }).setOrigin(0.5);
-    restBg.on('pointerdown', () => { this.clearOverlay(); this.startNewGame(); });
-    restTxt.setInteractive().on('pointerdown', () => { this.clearOverlay(); this.startNewGame(); });
-    items.push(restBg, restTxt);
+    items.push(makeButton(this, cx, cy + 80, '重 新 开 始',
+      () => { this.clearOverlay(); this.startNewGame(); },
+      { w: 180, h: 50, colors: BTN_DANGER }));
 
     this.overlay = this.add.container(0, 0, items).setDepth(10);
     StorageUtil.clearCurrentGame();

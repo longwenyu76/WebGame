@@ -25,7 +25,7 @@ const GRAY_800 = 0x1f2937;
 //  框架：上（暗）→下（亮）  面板：上（亮）→下（暗）  方向相反！
 export type BtnColorSet = [number, number, number, number, number];
 
-export const BTN_DEFAULT  : BtnColorSet = [GRAY_800, GRAY_700, GRAY_600, GRAY_600, GRAY_700];
+export const BTN_DEFAULT  : BtnColorSet = [0x1a1a2e, GRAY_700, GRAY_600, GRAY_600, GRAY_700];
 export const BTN_SUCCESS  : BtnColorSet = [0x14532d, 0x166534, 0x22c55e, 0x22c55e, 0x166534];
 export const BTN_DANGER   : BtnColorSet = [0x7f1d1d, 0x991b1b, 0xef4444, 0xef4444, 0x991b1b];
 export const BTN_SECONDARY: BtnColorSet = [0x1e293b, 0x334155, 0x64748b, 0x64748b, 0x334155];
@@ -83,16 +83,6 @@ export function makeButton(
   const pad   = 4;          // 每层 padding，与 CSS 的 p-[4px] 一致
 
   const g = scene.add.graphics();
-
-  // ── ① 投影（CSS box-shadow: 0 2px 4px rgba(0,0,0,0.7)）──
-  g.fillStyle(0x000000, 0.6);
-  g.fillRoundedRect(-hw + 1, -hh + 2, w, h, radius);
-
-  // ── ② 外层：gray-800 半透明渐变边框 ──
-  // CSS: bg-gradient-to-b from-gray-800/40 to-transparent
-  // Phaser 没有半透明渐变，用半透明实色近似
-  g.fillStyle(outerColor, 0.4);
-  g.fillRoundedRect(-hw, -hh, w, h, radius);
 
   // ── ③ 框架层：gray-700(上) → gray-600(下) ──
   const fW = w - pad * 2;
