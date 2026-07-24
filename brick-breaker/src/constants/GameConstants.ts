@@ -29,7 +29,7 @@ export const PADDLE_SCALE_MIN = 0.25; // 最小 0.25× = 20px
 // ── 球 ──────────────────────────────────────────────────────────────────────
 export const BALL_RADIUS         = 5;
 export const BALL_SPEED_BASE     = 300;  // px/s（第一关）
-export const BALL_SPEED_PER_LEVEL = 20;  // 每关速度增量 px/s
+export const BALL_SPEED_PER_LEVEL = 0;   // 每关速度增量 px/s（测试期间暂时关闭）
 export const BALL_SPEED_MAX      = 600;  // px/s 上限
 export const BALL_MAX_COUNT      = 64;   // 多球最多 64 个
 

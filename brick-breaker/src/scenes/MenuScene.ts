@@ -87,7 +87,7 @@ export class MenuScene extends Phaser.Scene {
       const hoverC = () => { contBtn.setColor('#ffffff'); contBg.setFillStyle(0x113311); };
       const outC   = () => { contBtn.setColor('#44cc44'); contBg.setFillStyle(0x0a1a0a); };
       const goC    = () => this.scene.start(SCENE_KEYS.GAME, {
-        levelIndex: save.levelIndex, score: 0, lives: save.lives,
+        levelIndex: save.levelIndex, score: save.score ?? 0, lives: save.lives,
       });
       contBtn.on('pointerover', hoverC).on('pointerout', outC).on('pointerdown', goC);
       contBg.setInteractive({ useHandCursor: true })
@@ -95,7 +95,9 @@ export class MenuScene extends Phaser.Scene {
     }
 
     // ── 道具说明（简版） ───────────────────────────────────────────────────────
-    this.add.text(cx, 400, '道 具 一 览', {
+    // 有存档时继续按钮占到 y≈404，标签需下移避免重叠
+    const itemsY = save ? 450 : 400;
+    this.add.text(cx, itemsY, '道 具 一 览', {
       fontSize: '16px', color: '#666699', fontFamily: FONT_FAMILY,
     }).setOrigin(0.5);
 
@@ -106,7 +108,7 @@ export class MenuScene extends Phaser.Scene {
     const itemW = 54;
     const startItemX = cx - (items.length * itemW) / 2 + itemW / 2;
     items.forEach(([label, color], i) => {
-      this.add.text(startItemX + i * itemW, 424, label, {
+      this.add.text(startItemX + i * itemW, itemsY + 24, label, {
         fontSize: '13px', color, fontFamily: FONT_FAMILY,
       }).setOrigin(0.5);
     });
@@ -131,7 +133,7 @@ export class MenuScene extends Phaser.Scene {
       const color = NORMAL_BRICK_COLORS[row % NORMAL_BRICK_COLORS.length];
       for (let col = 0; col < 10; col++) {
         const bx = BRICK_AREA_X + col * (BRICK_W + BRICK_GAP_X);
-        const by = 14 + row * (BRICK_H + 4);
+        const by = 44 + row * (BRICK_H + 4);
         g.fillStyle(color, 1);
         g.fillRoundedRect(bx, by, BRICK_W, BRICK_H, 3);
         g.fillStyle(0xffffff, 0.15);

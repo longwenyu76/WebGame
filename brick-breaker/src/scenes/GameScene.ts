@@ -130,7 +130,7 @@ export class GameScene extends Phaser.Scene {
     this.spawnBallOnPaddle();
 
     // 存档：每次进入关卡时保存进度（死光/通关后会清除）
-    StorageUtil.saveSaveSlot(this.levelIndex, this.lives);
+    StorageUtil.saveSaveSlot(this.levelIndex, this.lives, this.score);
 
     this.gfx = this.add.graphics();
 
@@ -205,10 +205,15 @@ export class GameScene extends Phaser.Scene {
         const SUBSTEPS = 4;
         const subDt = dt / SUBSTEPS;
         for (let s = 0; s < SUBSTEPS; s++) {
+          ball.stuckTimer += subDt;
           ball.update(subDt);
           this.handleWallCollisions(ball);
           this.handleBrickCollisions(ball);
           this.handlePaddleCollision(ball);
+        }
+        if (ball.stuckTimer > 60) {
+          this.nudgeBallAngle(ball);
+          ball.stuckTimer = 0;
         }
       }
 
@@ -275,9 +280,9 @@ export class GameScene extends Phaser.Scene {
   // ─────────────────────────────────────────────────────────────────────────
   private handleWallCollisions(ball: Ball): void {
     const r = ball.radius;
-    if (ball.x - r < 0)            { ball.x = r;                ball.vx =  Math.abs(ball.vx); this.audio.playWallHit(); }
-    if (ball.x + r > CANVAS_WIDTH) { ball.x = CANVAS_WIDTH - r; ball.vx = -Math.abs(ball.vx); this.audio.playWallHit(); }
-    if (ball.y - r < TOP_WALL_Y)   { ball.y = TOP_WALL_Y + r;   ball.vy =  Math.abs(ball.vy); this.audio.playWallHit(); }
+    if (ball.x - r < 0)            { ball.x = r;                ball.vx =  Math.abs(ball.vx); this.audio.playWallHit(); this.clampBallAngle(ball); }
+    if (ball.x + r > CANVAS_WIDTH) { ball.x = CANVAS_WIDTH - r; ball.vx = -Math.abs(ball.vx); this.audio.playWallHit(); this.clampBallAngle(ball); }
+    if (ball.y - r < TOP_WALL_Y)   { ball.y = TOP_WALL_Y + r;   ball.vy =  Math.abs(ball.vy); this.audio.playWallHit(); this.clampBallAngle(ball); }
   }
 
   private handlePaddleCollision(ball: Ball): void {
@@ -290,6 +295,7 @@ export class GameScene extends Phaser.Scene {
     ) {
       ball.y = paddle.top - r;
       ball.setVelocityFromAngle(paddle.getReflectAngle(ball.x), ball.speed);
+      ball.stuckTimer = 0;
       this.audio.playPaddleHit();
     }
   }
@@ -311,6 +317,7 @@ export class GameScene extends Phaser.Scene {
         break;
       }
 
+      ball.stuckTimer = 0; // hitting a breakable brick = making progress
       // Non-iron: apply damage
       const damage = this.fireBall ? 2 : 1;
       const result = this.brickGrid.hit(brick, damage);
@@ -346,6 +353,29 @@ export class GameScene extends Phaser.Scene {
       if (dT < dB) { ball.vy = -Math.abs(ball.vy); ball.y = eT; }
       else         { ball.vy =  Math.abs(ball.vy); ball.y = eB; }
     }
+    this.clampBallAngle(ball);
+  }
+
+  private clampBallAngle(ball: Ball): void {
+    const MIN_SIN = 0.26; // sin(15°)，防止球近乎水平反弹形成死循环
+    const speed = ball.speed;
+    if (speed === 0) return;
+    if (Math.abs(ball.vy) < speed * MIN_SIN) {
+      const sign = ball.vy <= 0 ? -1 : 1;
+      ball.vy = sign * speed * MIN_SIN;
+      ball.vx = (ball.vx >= 0 ? 1 : -1) * Math.sqrt(speed * speed - ball.vy * ball.vy);
+    }
+  }
+
+  private nudgeBallAngle(ball: Ball): void {
+    const deg = (Math.random() > 0.5 ? 1 : -1) * (15 + Math.random() * 20);
+    const rad = deg * Math.PI / 180;
+    const cos = Math.cos(rad), sin = Math.sin(rad);
+    const newVx = ball.vx * cos - ball.vy * sin;
+    const newVy = ball.vx * sin + ball.vy * cos;
+    ball.vx = newVx;
+    ball.vy = newVy;
+    this.clampBallAngle(ball);
   }
 
   // ─────────────────────────────────────────────────────────────────────────

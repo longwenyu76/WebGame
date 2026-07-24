@@ -5,6 +5,7 @@ export class Ball {
   vy = 0;
   readonly radius: number;
   active = false;
+  stuckTimer = 0; // seconds since last breakable-brick hit, for anti-stuck detection
 
   constructor(x: number, y: number, radius: number) {
     this.x = x;

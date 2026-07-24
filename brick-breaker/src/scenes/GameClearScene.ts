@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { SCENE_KEYS, CANVAS_WIDTH, FONT_FAMILY, SCORE } from '../constants/GameConstants';
 import { StorageUtil } from '../utils/StorageUtil';
+import { LEVELS } from '../data/levels';
 
 export class GameClearScene extends Phaser.Scene {
   constructor() { super({ key: SCENE_KEYS.GAME_CLEAR }); }
@@ -11,6 +12,7 @@ export class GameClearScene extends Phaser.Scene {
     const total     = data.score + lifeBonus;
     const isNew     = total > StorageUtil.getHighScore();
     StorageUtil.saveHighScore(total);
+    StorageUtil.saveBestLevel(LEVELS.length);
     StorageUtil.clearSaveSlot();
 
     this.add.rectangle(cx, 330, 360, 320, 0x000000, 0.92)
